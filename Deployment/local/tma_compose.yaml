@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    container_name: "rabbitmq"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+
+  sql_taskapi:
+    image: "mcr.microsoft.com/mssql/server:2022-latest"
+    container_name: "sql_taskapi"
+    environment:
+      SA_PASSWORD: ${SQL_TASKAPI_PASS}
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1434:1433"
+    volumes:
+      - ./db-data/taskapi:/var/opt/mssql
+
+  sql_authapi:
+    image: "mcr.microsoft.com/mssql/server:2022-latest"
+    container_name: "sql_authapi"
+    environment:
+      SA_PASSWORD: ${SQL_AUTHAPI_PASS}
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1435:1433"
+    volumes:
+      - ./db-data/authapi:/var/opt/mssql
+
+  taskapi:
+    build: ../../taskApi
+    depends_on:
+      - rabbitmq
+      - sql_taskapi
+    environment:
+      ConnectionStrings__Database: "Server=sql_taskapi;Database=${SQL_TASKAPI_DB};User Id=${SQL_TASKAPI_USER};Password=${SQL_TASKAPI_PASS};"
+      RabbitMQ__Host: "rabbitmq"
+
+  authapi:
+    build: ../../authApi
+    depends_on:
+      - sql_authapi
+    environment:
+      ConnectionStrings__Database: "Server=sql_authapi;Database=${SQL_AUTHAPI_DB};User Id=${SQL_AUTHAPI_USER};Password=${SQL_AUTHAPI_PASS};"
+
+  notificationservice:
+    build: ../../notificationService
+    depends_on:
+      - rabbitmq
+    environment:
+      RabbitMQ__Host: "rabbitmq"

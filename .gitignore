@@ -1,0 +1,76 @@
+# =========================
+# Visual Studio
+# =========================
+.vs/
+*.suo
+*.user
+*.sln.docstates
+
+#secrets
+.env
+
+## Ignore SQL Server dump files
+**/db-data/**/*.gdmp
+db-data
+**/db-data
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+
+# MSTest
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# Temporary files
+*.tmp
+*.log
+logs/
+*.cache
+*.pidb
+*.dbmdl
+*.bak
+
+# Compiled files
+*.ilk
+*.obj
+*.pch
+*.pdb
+*.sbr
+*.rsp
+
+# NuGet
+packages/
+!packages/repositories.config
+
+# Rider / ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Publish
+publish/
+*.Publish.xml
+*.pubxml
+*.azurePubxml
+
+# Profiler
+*.psess
+*.vsp
+*.vspx
+
+# Windows / Mac system files
+Thumbs.db
+ehthumbs.db
+.DS_Store
+Desktop.ini
+$RECYCLE.BIN/
+
+# Backup & upgrade logs
+_UpgradeReport_Files/
+Backup*/
+UpgradeLog*.XML
+UpgradeLog*.htm
