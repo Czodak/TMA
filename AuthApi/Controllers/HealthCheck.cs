@@ -9,7 +9,7 @@ namespace AuthApi.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok();
+            return Ok("Greetings from auth api :)))");
         }
     }
 }

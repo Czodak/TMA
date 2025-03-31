@@ -1,4 +1,4 @@
-version: "3.8"
+version: '3.8'
 
 services:
   rabbitmq:
@@ -7,6 +7,8 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    env_file:
+      - .env
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
@@ -14,30 +16,72 @@ services:
   sql_taskapi:
     image: "mcr.microsoft.com/mssql/server:2022-latest"
     container_name: "sql_taskapi"
+    env_file:
+      - .env
     environment:
-      SA_PASSWORD: ${SQL_TASKAPI_PASS}
+      SA_PASSWORD: ${SQL_TASKAPI_SA_PASS}
       ACCEPT_EULA: "Y"
     ports:
       - "1434:1433"
     volumes:
-      - ./db-data/taskapi:/var/opt/mssql
+      - mssql_taskapi:/var/opt/mssql      
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep sqlservr || exit 1"]
+      interval: 10s
+      timeout: 60s
+      retries: 60
+
+  init_taskapi_db:
+    image: "mcr.microsoft.com/mssql-tools"
+    container_name: "init_taskapi_db"
+    depends_on:
+      sql_taskapi:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - ./init-taskapi-db.sh:/init-taskapi-db.sh
+    entrypoint: ["/bin/bash", "-c", "chmod +x /init-taskapi-db.sh && /init-taskapi-db.sh"]
 
   sql_authapi:
     image: "mcr.microsoft.com/mssql/server:2022-latest"
     container_name: "sql_authapi"
+    env_file:
+      - .env
     environment:
-      SA_PASSWORD: ${SQL_AUTHAPI_PASS}
+      SA_PASSWORD: ${SQL_AUTHAPI_SA_PASS}
       ACCEPT_EULA: "Y"
     ports:
       - "1435:1433"
     volumes:
-      - ./db-data/authapi:/var/opt/mssql
+      - mssql_authapi:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep sqlservr || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  init_authapi_db:
+    image: "mcr.microsoft.com/mssql-tools"
+    container_name: "init_authapi_db"
+    depends_on:
+      sql_authapi:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - ./init-authapi-db.sh:/init-authapi-db.sh    
+    entrypoint: ["/bin/bash", "-c", "chmod +x /init-authapi-db.sh && /init-authapi-db.sh"]
 
   taskapi:
     build: ../../taskApi
     depends_on:
       - rabbitmq
       - sql_taskapi
+    ports:
+      - "8081:8080"
+    env_file:
+      - .env
     environment:
       ConnectionStrings__Database: "Server=sql_taskapi;Database=${SQL_TASKAPI_DB};User Id=${SQL_TASKAPI_USER};Password=${SQL_TASKAPI_PASS};"
       RabbitMQ__Host: "rabbitmq"
@@ -46,8 +90,30 @@ services:
     build: ../../authApi
     depends_on:
       - sql_authapi
+    ports:
+      - "8082:8080"
+    env_file:
+      - .env
     environment:
       ConnectionStrings__Database: "Server=sql_authapi;Database=${SQL_AUTHAPI_DB};User Id=${SQL_AUTHAPI_USER};Password=${SQL_AUTHAPI_PASS};"
+
+  flyway:
+    image: flyway/flyway:latest
+    container_name: "flyway"
+    depends_on:
+      sql_taskapi:
+        condition: service_healthy
+      init_taskapi_db:
+        condition: service_completed_successfully
+    volumes:
+      - ../../TaskApi/migrations:/flyway/sql
+    env_file:
+      - .env
+    environment:
+      FLYWAY_URL: "jdbc:sqlserver://sql_taskapi:1433;databaseName=${SQL_TASKAPI_DB};encrypt=true;trustServerCertificate=true"
+      FLYWAY_USER: ${SQL_TASKAPI_FLYWAY_USER}
+      FLYWAY_PASSWORD: ${SQL_TASKAPI_FLYWAY_PASS}
+    command: migrate
 
   notificationservice:
     build: ../../notificationService
@@ -55,3 +121,7 @@ services:
       - rabbitmq
     environment:
       RabbitMQ__Host: "rabbitmq"
+
+volumes:
+  mssql_taskapi:
+  mssql_authapi:

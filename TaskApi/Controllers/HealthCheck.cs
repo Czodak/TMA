@@ -9,7 +9,7 @@ namespace TaskApi.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok();
+            return Ok("Greetings from task api");
         }
     }
 }
