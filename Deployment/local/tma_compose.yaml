@@ -74,7 +74,7 @@ services:
     entrypoint: ["/bin/bash", "-c", "chmod +x /init-authapi-db.sh && /init-authapi-db.sh"]
 
   taskapi:
-    build: ../../taskApi
+    build: ../../TaskApiSolution
     depends_on:
       - rabbitmq
       - sql_taskapi
@@ -83,11 +83,11 @@ services:
     env_file:
       - .env
     environment:
-      ConnectionStrings__Database: "Server=sql_taskapi;Database=${SQL_TASKAPI_DB};User Id=${SQL_TASKAPI_USER};Password=${SQL_TASKAPI_PASS};"
+      ConnectionStrings__Database: "Server=sql_taskapi;Database=${SQL_TASKAPI_DB};User Id=${SQL_TASKAPI_USER};Password=${SQL_TASKAPI_PASS};TrustServerCertificate=true;"
       RabbitMQ__Host: "rabbitmq"
 
   authapi:
-    build: ../../authApi
+    build: ../../AuthapiSolution/src/AuthApi
     depends_on:
       - sql_authapi
     ports:
@@ -106,7 +106,7 @@ services:
       init_taskapi_db:
         condition: service_completed_successfully
     volumes:
-      - ../../TaskApi/migrations:/flyway/sql
+      - ../../TaskApiSolution/src/TaskApi/migrations:/flyway/sql
     env_file:
       - .env
     environment:
@@ -116,7 +116,7 @@ services:
     command: migrate
 
   notificationservice:
-    build: ../../notificationService
+    build: ../../NotificationSolution/src/NotificationService
     depends_on:
       - rabbitmq
     environment:

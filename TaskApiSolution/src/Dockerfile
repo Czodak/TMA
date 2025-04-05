@@ -11,7 +11,8 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["TaskApi.csproj", "."]
+COPY ["src/TaskApi/TaskApi.csproj", "src/TaskApi/"]
+COPY ["src/TaskApi.Data/TaskApi.Data.csproj", "src/TaskApi.Data/"]
 RUN dotnet restore "./TaskApi.csproj"
 COPY . .
 WORKDIR "/src/."
