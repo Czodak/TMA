@@ -73,6 +73,36 @@ services:
       - ./init-authapi-db.sh:/init-authapi-db.sh    
     entrypoint: ["/bin/bash", "-c", "chmod +x /init-authapi-db.sh && /init-authapi-db.sh"]
 
+  authapi:
+    build:
+        context: ../../AuthapiSolution/src/AuthApi
+        target: final
+    depends_on:
+      - sql_authapi
+      - authapi-migrator
+    ports:
+      - "8082:8080"
+    env_file:
+      - .env
+    environment:
+      ConnectionStrings__Database: "Server=sql_authapi;Database=${SQL_AUTHAPI_DB};User Id=${SQL_AUTHAPI_USER};Password=${SQL_AUTHAPI_PASS};TrustServerCertificate=true;"
+
+  #EF Core migrations
+  authapi-migrator:
+      build:
+        context: ../../AuthapiSolution/src/AuthApi
+        target: migrator
+      depends_on:
+        sql_authapi:
+          condition: service_healthy
+        init_authapi_db:
+          condition: service_completed_successfully
+      env_file:
+        - .env
+      environment:
+        ConnectionStrings__Database: "Server=sql_authapi;Database=${SQL_AUTHAPI_DB};User Id=${SQL_AUTHAPI_EF_USER};Password=${SQL_AUTHAPI_EF_PASS};TrustServerCertificate=true;"
+      restart: "no"
+
   taskapi:
     build: ../../TaskApiSolution
     depends_on:
@@ -85,17 +115,6 @@ services:
     environment:
       ConnectionStrings__Database: "Server=sql_taskapi;Database=${SQL_TASKAPI_DB};User Id=${SQL_TASKAPI_USER};Password=${SQL_TASKAPI_PASS};TrustServerCertificate=true;"
       RabbitMQ__Host: "rabbitmq"
-
-  authapi:
-    build: ../../AuthapiSolution/src/AuthApi
-    depends_on:
-      - sql_authapi
-    ports:
-      - "8082:8080"
-    env_file:
-      - .env
-    environment:
-      ConnectionStrings__Database: "Server=sql_authapi;Database=${SQL_AUTHAPI_DB};User Id=${SQL_AUTHAPI_USER};Password=${SQL_AUTHAPI_PASS};"
 
   flyway:
     image: flyway/flyway:latest

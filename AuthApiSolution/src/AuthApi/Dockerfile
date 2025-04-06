@@ -27,3 +27,21 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "AuthApi.dll"]
+
+# Migration stage
+FROM mcr.microsoft.com/dotnet/sdk:9.0.100 AS migrator
+WORKDIR /app
+
+# Copy source
+COPY . .
+
+# Install EF CLI tools
+RUN dotnet tool install --global dotnet-ef --version 9.0.0
+ENV PATH="${PATH}:/root/.dotnet/tools"
+
+# Restore + build
+RUN dotnet restore "AuthApi.csproj"
+RUN dotnet build "AuthApi.csproj" -c Release
+
+# Set entrypoint for migration
+ENTRYPOINT ["dotnet", "ef", "database", "update", "--project", "AuthApi.csproj", "--startup-project", "AuthApi.csproj", "--verbose"]
