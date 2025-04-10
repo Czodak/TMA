@@ -86,6 +86,7 @@ services:
       - .env
     environment:
       ConnectionStrings__Database: "Server=sql_authapi;Database=${SQL_AUTHAPI_DB};User Id=${SQL_AUTHAPI_USER};Password=${SQL_AUTHAPI_PASS};TrustServerCertificate=true;"
+      JwtSettings__Secret: "${JWT_SECRET}"
 
   #EF Core migrations
   authapi-migrator:
