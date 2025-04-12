@@ -18,6 +18,8 @@ namespace TaskApi.Data.DatabaseContext
                 entity.Property(t => t.Id) 
                     .HasColumnName("Id")
                     .ValueGeneratedOnAdd();
+                entity.Property(t => t.Status)
+                    .HasConversion<int>(); // converts enum to int
             });
             base.OnModelCreating(modelBuilder);
         }

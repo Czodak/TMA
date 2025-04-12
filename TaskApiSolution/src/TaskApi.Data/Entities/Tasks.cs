@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using TaskApi.Common.Enums;
 
 namespace TaskApi.Data.Entities
 {
@@ -13,9 +14,13 @@ namespace TaskApi.Data.Entities
         public string Description { get; set; }
         public int CreatorId { get; set; }
         public int? CurrentlyAssignedUserId {  get; set; }
+        
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime CreatedAt { get; set; }
-        public DateTime? LastUpdatedAt { get; set; }
-        public string Status { get; set; }
+        
+        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+        public DateTime LastUpdatedAt { get; set; }
+        public TaskStatuses Status { get; set; }
         public int Priority { get; set; }
 
     }

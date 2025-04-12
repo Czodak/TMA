@@ -116,6 +116,7 @@ services:
     environment:
       ConnectionStrings__Database: "Server=sql_taskapi;Database=${SQL_TASKAPI_DB};User Id=${SQL_TASKAPI_USER};Password=${SQL_TASKAPI_PASS};TrustServerCertificate=true;"
       RabbitMQ__Host: "rabbitmq"
+      JwtSettings__Secret: "${JWT_SECRET}"
 
   flyway:
     image: flyway/flyway:latest

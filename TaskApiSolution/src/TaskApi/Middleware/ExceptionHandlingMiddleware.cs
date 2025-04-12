@@ -1,6 +1,6 @@
-﻿using AuthApi.Exceptions;
+﻿using TaskApi.Common.Exceptions;
 
-namespace AuthApi.Middleware
+namespace TaskApi.Middleware
 {
     public class ExceptionHandlingMiddleware
     {
@@ -33,7 +33,7 @@ namespace AuthApi.Middleware
                 };
 
                 switch (ex)
-                {                    
+                {
                     case NotFoundException:
                         response.StatusCode = StatusCodes.Status404NotFound;
                         break;

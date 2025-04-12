@@ -44,7 +44,7 @@ namespace AuthApi
 
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"] ?? string.Empty)),
+                            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"])),
 
                         ValidateLifetime = true
                     };
