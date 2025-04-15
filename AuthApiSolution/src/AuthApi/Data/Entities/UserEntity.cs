@@ -16,6 +16,12 @@ namespace AuthApi.Data.Entities
         [Required]
         public string PasswordHash { get; set; }
 
+        [Required, MaxLength(255)]
+        public string Name { get; set; }
+
+        [Required, MaxLength(255)]
+        public string LastName { get; set; }
+
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

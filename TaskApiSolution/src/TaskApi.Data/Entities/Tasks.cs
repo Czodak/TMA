@@ -12,8 +12,8 @@ namespace TaskApi.Data.Entities
         public int Id { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
-        public int CreatorId { get; set; }
-        public int? CurrentlyAssignedUserId {  get; set; }
+        public Guid CreatorId { get; set; }
+        public Guid? CurrentlyAssignedUserId {  get; set; }
         
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime CreatedAt { get; set; }

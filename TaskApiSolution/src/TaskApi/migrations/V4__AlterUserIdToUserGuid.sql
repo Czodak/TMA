@@ -1,0 +1,11 @@
+ALTER TABLE Tasks
+    DROP COLUMN CreatorId;
+
+ALTER TABLE Tasks 
+    DROP COLUMN CurrentlyAssignedUserId;
+
+ALTER TABLE Tasks
+    ADD CreatorId UNIQUEIDENTIFIER NOT NULL;
+
+ALTER TABLE Tasks
+    ADD CurrentlyAssignedUserId UNIQUEIDENTIFIER NULL;

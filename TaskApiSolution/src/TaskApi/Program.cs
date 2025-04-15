@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TaskApi.BusinessLogic.Services;
+using TaskApi.Common.HttpClients.Auth;
 using TaskApi.Data.DatabaseContext;
 using TaskApi.Data.Repositories;
 using TaskApi.Middleware;
@@ -56,9 +57,33 @@ namespace TaskApi
 
             builder.Services.AddScoped<ITaskService, TaskService>();
             builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+            builder.Services.AddHttpContextAccessor();
 
 
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+            builder.Services.AddHttpClient();
+
+            builder.Services.AddTransient<AuthApiClient>(sp =>
+            {
+                var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+                var httpClient = httpClientFactory.CreateClient();
+                var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+                var jwtToken = httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+
+                if (!string.IsNullOrEmpty(jwtToken))
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken.Replace("Bearer ", ""));
+                }
+
+                var client = new AuthApiClient(httpClient)
+                {
+                    BaseUrl = "http://authapi:8080"
+                };
+
+                return client;
+            });
+
             var app = builder.Build();
 
             app.UseMiddleware<ExceptionHandlingMiddleware>();

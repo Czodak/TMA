@@ -9,5 +9,7 @@ namespace AuthApi.Data.Repositories
         Task AddAsync(UserEntity user);
         Task<bool> CheckExistenceByEmail(string email);
         Task<UserInfo> GetByIdAsync(Guid userId);
+
+        Task<List<UserInfo>> GetAllUsers();        
     }
 }

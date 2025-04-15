@@ -66,12 +66,25 @@ namespace AuthApi.BusinessLogic.Services
             var user = new UserEntity
             {
                 Email = registerUserDto.Email,
-                PasswordHash = hashedPassword
+                PasswordHash = hashedPassword,
+                Name = registerUserDto.Name,
+                LastName = registerUserDto.LastName
             };
 
             await _userRepository.AddAsync(user);
 
             return GenerateJwt(user);
+        }
+
+        public async Task<List<UserInfo>> GetAllUserInfo()
+        {
+            return await _userRepository.GetAllUsers();
+        }
+
+
+        public async Task<bool> UserExists(string email)
+        {
+            return await _userRepository.CheckExistenceByEmail(email);
         }
 
         private string GenerateJwt(UserEntity user)

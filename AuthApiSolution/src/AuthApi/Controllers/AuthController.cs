@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using AuthApi.BusinessLogic.Services;
 using AuthApi.Contracts.Requests;
+using AuthApi.Contracts.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -33,11 +34,28 @@ namespace AuthApi.Controllers
 
         [HttpGet("me")]
         [Authorize]
-        public async Task<IActionResult> Me()
+        public async Task<ActionResult<UserInfo>> Me()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var userInfo = await _authService.GetCurrentlyLoggedInUser(userId);
             return Ok(userInfo);
+        }
+
+        [HttpGet("all")]
+        [Authorize]
+        public async Task<ActionResult<UserInfo>> GetAllUsers()
+        {
+            var usersInfo = await _authService.GetAllUserInfo();
+            return Ok(usersInfo);
+        }
+        
+        
+        [HttpGet("userExists")]
+        [Authorize]
+        public async Task<ActionResult<UserInfo>> UserExists([FromQuery] string email)
+        {
+            var usersInfo = await _authService.UserExists(email);
+            return Ok(usersInfo);
         }
     }
 }

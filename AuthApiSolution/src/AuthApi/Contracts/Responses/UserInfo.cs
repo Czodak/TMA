@@ -6,13 +6,22 @@ namespace AuthApi.Contracts.Responses
     {
         [JsonProperty]    
         public Guid Id { get; set; }
+        
         [JsonProperty]
         public string Email { get; set; }
 
-        public UserInfo(Guid id, string email)
+        [JsonProperty]
+        public string Name { get; set; }
+
+        [JsonProperty]
+        public string LastName { get; set; }
+
+        public UserInfo(Guid id, string email, string name, string lastName)
         {
             Id = id;
             Email = email;
+            Name = name;
+            LastName = lastName;
         }
     }
 }
