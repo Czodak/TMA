@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using TaskApi.Common.Contracts.Response;
@@ -36,13 +31,18 @@ namespace TaskApi.Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task<ReadTaskDto> GetTaskByIdAsync(int id)
+        public async Task<ReadTaskDto> GetTaskDtoByIdAsync(int id)
         {
-            var t = await _dbContext.Tasks.Where(task => task.Id == id).FirstOrDefaultAsync();
             return await _dbContext.Tasks
                 .Where(task => task.Id == id)
                 .ProjectTo<ReadTaskDto>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<Tasks> GetTaskByIdAsync(int id)
+        {
+            return await _dbContext.Tasks
+                .FirstOrDefaultAsync(task => task.Id == id);
         }
 
         public async Task SaveTaskAsync(CreateTaskRequest task)
@@ -60,6 +60,12 @@ namespace TaskApi.Data.Repositories
                 throw new NotFoundException($"Task with id {taskId} not found");
             }
             _dbContext.Tasks.Remove(task);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task UpdateTaskAsync(Tasks task)
+        {
+            _dbContext.Tasks.Update(task);
             await _dbContext.SaveChangesAsync();
         }
     }

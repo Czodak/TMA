@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskApi.BusinessLogic.Services;
+using TaskApi.Common.Contracts.Request;
 using TaskApi.Contracts.Request;
 
 namespace TaskApi.Controllers
@@ -41,6 +42,14 @@ namespace TaskApi.Controllers
         public async Task<IActionResult> DeleteTask([FromRoute] int taskId)
         {
             await _taskService.DeleteTask(taskId);
+            return Ok();
+        }
+
+        [HttpPatch]
+        [Authorize]
+        public async Task<IActionResult> UpdateTask([FromBody] UpdateTaskDto updateTaskDto)
+        {
+            await _taskService.UpdateTaskAsync(updateTaskDto);
             return Ok();
         }
     }

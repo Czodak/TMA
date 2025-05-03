@@ -1,4 +1,7 @@
-﻿using TaskApi.Common.Contracts.Response;
+﻿using TaskApi.BusinessLogic.Extensions;
+using TaskApi.Common.Contracts.Request;
+using TaskApi.Common.Contracts.Response;
+using TaskApi.Common.Exceptions;
 using TaskApi.Common.HttpClients.Auth;
 using TaskApi.Contracts.Request;
 using TaskApi.Data.Repositories;
@@ -44,7 +47,21 @@ namespace TaskApi.BusinessLogic.Services
             {
                 throw new ArgumentException("TaskId cant be less than 0");
             }
-            return await _taskRepository.GetTaskByIdAsync(taskId);
+            return await _taskRepository.GetTaskDtoByIdAsync(taskId);
+        }
+
+        public async Task UpdateTaskAsync(UpdateTaskDto updateTaskDto)
+        {
+            var existingTask = await _taskRepository.GetTaskByIdAsync(updateTaskDto.Id);
+            if(existingTask == null)
+            {
+                throw new NotFoundException("Task with given id was not found");
+            }
+
+            if(UpdateTaskExtension.ApplyUpdate(existingTask, updateTaskDto))
+            {
+                await _taskRepository.UpdateTaskAsync(existingTask);
+            }
         }
     }
 }

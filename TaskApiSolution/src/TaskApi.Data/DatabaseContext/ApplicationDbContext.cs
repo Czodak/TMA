@@ -18,6 +18,17 @@ namespace TaskApi.Data.DatabaseContext
                 entity.Property(t => t.Id) 
                     .HasColumnName("Id")
                     .ValueGeneratedOnAdd();
+
+                modelBuilder.Entity<Tasks>()
+                   .Property(t => t.CreatedAt)
+                   .HasDefaultValueSql("SYSUTCDATETIME()")
+                   .ValueGeneratedOnAdd();
+
+                modelBuilder.Entity<Tasks>()
+                   .Property(t => t.LastUpdatedAt)
+                   .HasDefaultValueSql("SYSUTCDATETIME()")
+                   .ValueGeneratedOnAddOrUpdate(); 
+
                 entity.Property(t => t.Status)
                     .HasConversion<int>(); // converts enum to int
             });
