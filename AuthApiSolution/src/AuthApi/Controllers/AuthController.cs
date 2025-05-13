@@ -43,7 +43,7 @@ namespace AuthApi.Controllers
 
         [HttpGet("all")]
         [Authorize]
-        public async Task<ActionResult<UserInfo>> GetAllUsers()
+        public async Task<ActionResult<List<UserInfo>>> GetAllUsers()
         {
             var usersInfo = await _authService.GetAllUserInfo();
             return Ok(usersInfo);

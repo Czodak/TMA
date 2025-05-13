@@ -6,6 +6,7 @@ namespace TaskApi.Controllers
     [ApiController]
     public class HealthCheck : ControllerBase
     {
+
         [HttpGet]
         public IActionResult Get()
         {

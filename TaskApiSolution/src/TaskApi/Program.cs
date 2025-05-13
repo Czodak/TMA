@@ -1,11 +1,16 @@
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using TaskApi.BusinessLogic.MessagesCreator;
+using TaskApi.BusinessLogic.MessagesFactory;
 using TaskApi.BusinessLogic.Services;
+using TaskApi.Common.Config;
 using TaskApi.Common.HttpClients.Auth;
 using TaskApi.Data.DatabaseContext;
 using TaskApi.Data.Repositories;
+using TaskApi.Messaging.Client;
 using TaskApi.Middleware;
 
 namespace TaskApi
@@ -57,8 +62,13 @@ namespace TaskApi
 
             builder.Services.AddScoped<ITaskService, TaskService>();
             builder.Services.AddScoped<ITaskRepository, TaskRepository>();
-            builder.Services.AddHttpContextAccessor();
 
+            builder.Services.AddScoped<IMessageFactory, MessageFactory>();
+            builder.Services.AddHttpContextAccessor();
+            
+            //rabbit mq
+            builder.Services.Configure<RabbitMqConfig>(builder.Configuration.GetSection("RabbitMq"));
+            builder.Services.AddScoped<IMessageClient, MessageClient>();
 
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

@@ -1,3 +1,9 @@
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using NotificationService.EventHandling;
+using System.Text.Json.Serialization.Metadata;
+using System.Net.Mail;
+
 namespace NotificationService
 {
     public class Program
@@ -6,6 +12,27 @@ namespace NotificationService
         {
             var builder = Host.CreateApplicationBuilder(args);
             builder.Services.AddHostedService<Worker>();
+            builder.Services.AddScoped<IMessageEventHandler, MessageEventHandler>();
+
+            builder.Services.Configure<JsonPolymorphismOptions>(options =>
+            {
+                options.TypeDiscriminatorPropertyName = "eventType";
+            });
+
+            builder.Services.Configure<JsonSerializerOptions>(options =>
+            {
+                options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                options.Converters.Add(new JsonStringEnumConverter());
+            });
+
+            builder.Services
+                .AddFluentEmail("test@test.pl")
+                .AddSmtpSender(new SmtpClient("smtp4dev")
+                {
+                    Port = 25,
+                    EnableSsl = false
+                });
+                
 
             var host = builder.Build();
             host.Run();

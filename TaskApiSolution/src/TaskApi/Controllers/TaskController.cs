@@ -52,5 +52,21 @@ namespace TaskApi.Controllers
             await _taskService.UpdateTaskAsync(updateTaskDto);
             return Ok();
         }
+
+        [HttpPatch("status")]
+        [Authorize]
+        public async Task<IActionResult> UpdateTaskStatus([FromBody] UpdateTaskStatusDto updateTaskDto)
+        {
+            await _taskService.UpdateTaskStatusAsync(updateTaskDto);
+            return Ok();
+        }
+
+        [HttpPatch("assign")]
+        [Authorize]
+        public async Task<IActionResult> ChangeTaskAssignment([FromBody] UpdateTaskAssigmentDto updateTaskAssignmentDto)
+        {
+            await _taskService.ChangeTaskAssignment(updateTaskAssignmentDto);
+            return Ok();
+        }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
+using TaskApi.Common.Contracts.Request;
 using TaskApi.Common.Contracts.Response;
+using TaskApi.Common.Enums;
 using TaskApi.Common.Exceptions;
 using TaskApi.Contracts.Request;
 using TaskApi.Data.DatabaseContext;
@@ -63,9 +65,33 @@ namespace TaskApi.Data.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
+        public async Task DeleteTask(Tasks task)
+        {
+            _dbContext.Tasks.Remove(task);
+            await _dbContext.SaveChangesAsync();
+        }
+
         public async Task UpdateTaskAsync(Tasks task)
         {
             _dbContext.Tasks.Update(task);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task UpdateTaskStatusAsync(Tasks task, TaskStatuses newStatus)
+        {
+            _dbContext.Tasks.Attach(task);
+            task.Status = newStatus;
+            _dbContext.Entry(task).Property(p => p.Status).IsModified = true;
+
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task UpdateAssignmentAsync(Tasks existingTask, UpdateTaskAssigmentDto updateTaskAssigmentDto)
+        {
+            _dbContext.Tasks.Attach(existingTask);
+            existingTask.CurrentlyAssignedUserId = updateTaskAssigmentDto.NewAssignedUser;
+            _dbContext.Entry(existingTask).Property(p => p.CurrentlyAssignedUserId).IsModified = true;
+
             await _dbContext.SaveChangesAsync();
         }
     }

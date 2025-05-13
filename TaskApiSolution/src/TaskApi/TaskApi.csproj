@@ -19,6 +19,7 @@
     <ProjectReference Include="..\TaskApi.BusinessLogic\TaskApi.BusinessLogic.csproj" />
     <ProjectReference Include="..\TaskApi.Common\TaskApi.Common.csproj" />
     <ProjectReference Include="..\TaskApi.Data\TaskApi.Data.csproj" />
+    <ProjectReference Include="..\TaskApi.Messaging\TaskApi.Messaging.csproj" />
   </ItemGroup>
 
 </Project>

@@ -114,17 +114,26 @@
                         "content": {
                             "text/plain": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/UserInfo"
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/UserInfo"
+                                    }
                                 }
                             },
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/UserInfo"
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/UserInfo"
+                                    }
                                 }
                             },
                             "text/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/UserInfo"
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/UserInfo"
+                                    }
                                 }
                             }
                         }
@@ -211,6 +220,14 @@
                         "nullable": true
                     },
                     "password": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "lastName": {
                         "type": "string",
                         "nullable": true
                     }

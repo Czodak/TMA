@@ -12,6 +12,11 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    healthcheck:
+        test: ["CMD", "rabbitmq-diagnostics", "ping"]
+        interval: 5s
+        timeout: 5s
+        retries: 5
 
   sql_taskapi:
     image: "mcr.microsoft.com/mssql/server:2022-latest"
@@ -116,6 +121,9 @@ services:
     environment:
       ConnectionStrings__Database: "Server=sql_taskapi;Database=${SQL_TASKAPI_DB};User Id=${SQL_TASKAPI_USER};Password=${SQL_TASKAPI_PASS};TrustServerCertificate=true;"
       RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Port: "5672"
+      RabbitMQ__User: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASS}
       JwtSettings__Secret: "${JWT_SECRET}"
 
   flyway:
@@ -139,10 +147,33 @@ services:
   notificationservice:
     build: ../../NotificationSolution/src/NotificationService
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
+      smtp4dev:
+        condition: service_started
     environment:
       RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Port: "5672"
+      RabbitMQ__User: ${RABBITMQ_USER}
+      RabbitMQ__Password: ${RABBITMQ_PASS}
+
+  smtp4dev:
+    image: rnwood/smtp4dev:v3
+    restart: always
+    ports:
+      # web interface port
+      - '5080:80'
+      # SMTP server port
+      - '2525:25'
+      # IMAP server port
+      - '143:143'
+    volumes:
+        - smtp4dev-data:/smtp4dev
+    environment:      
+      - ServerOptions__Urls=http://*:80
+      - ServerOptions__HostName=smtp4dev
 
 volumes:
   mssql_taskapi:
   mssql_authapi:
+  smtp4dev-data:  

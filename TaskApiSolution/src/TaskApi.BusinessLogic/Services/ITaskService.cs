@@ -12,5 +12,7 @@ namespace TaskApi.BusinessLogic.Services
         Task DeleteTask(int taskId);
 
         Task UpdateTaskAsync(UpdateTaskDto updateTaskDto);
+        Task UpdateTaskStatusAsync(UpdateTaskStatusDto updateTaskStatusDto);
+        Task ChangeTaskAssignment(UpdateTaskAssigmentDto updateTaskAssigmentDto);
     }
 }

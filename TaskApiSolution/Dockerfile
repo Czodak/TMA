@@ -10,6 +10,7 @@ WORKDIR /src
 COPY ["src/TaskApi.Data/TaskApi.Data.csproj", "src/TaskApi.Data/"]
 COPY ["src/TaskApi.BusinessLogic/TaskApi.BusinessLogic.csproj", "src/TaskApi.BusinessLogic/"]
 COPY ["src/TaskApi.Common/TaskApi.Common.csproj", "src/TaskApi.Common/"]
+COPY ["src/TaskApi.Messaging/TaskApi.Messaging.csproj", "src/TaskApi.Messaging/"]
 COPY ["src/TaskApi/TaskApi.csproj", "src/TaskApi/"] 
 
 # 2. Restore dependencies (this will include referenced projects)
