@@ -37,7 +37,9 @@ namespace AuthApi.Middleware
                     case NotFoundException:
                         response.StatusCode = StatusCodes.Status404NotFound;
                         break;
-
+                    case ArgumentException:
+                        response.StatusCode = StatusCodes.Status400BadRequest;
+                        break;
                     default:
                         response.StatusCode = StatusCodes.Status500InternalServerError;
                         errorResponse = new { error = "An unexpected error occurred" };

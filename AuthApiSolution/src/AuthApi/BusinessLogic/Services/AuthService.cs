@@ -1,8 +1,10 @@
 ﻿
 
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Mail;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 using AuthApi.Contracts.Requests;
 using AuthApi.Contracts.Responses;
 using AuthApi.Data.Entities;
@@ -17,6 +19,7 @@ namespace AuthApi.BusinessLogic.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly ILogger<AuthService> _logger;
+        private readonly Regex EmailValidatonRegex;
         private readonly string _jwtSecret;
 
         public AuthService(IUserRepository userRepository, ILogger<AuthService> logger, IConfiguration configuration)
@@ -24,6 +27,7 @@ namespace AuthApi.BusinessLogic.Services
             _userRepository = userRepository;
             _logger = logger;           
             _jwtSecret = configuration["JwtSettings:Secret"] ?? string.Empty;
+            EmailValidatonRegex = new Regex("^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$");
         }
 
         public async Task<string> LoginAsync(LoginUserRequest loginUserDto)
@@ -54,12 +58,18 @@ namespace AuthApi.BusinessLogic.Services
 
         public async Task<string> RegisterAsync(RegisterUserRequest registerUserDto)
         {
+            if(!IsEmailValid(registerUserDto.Email))
+            {
+                throw new ArgumentException("Invalid email address");
+            }
+
             var userExists = await _userRepository.CheckExistenceByEmail(registerUserDto.Email);
 
             if(userExists)
             {
-                throw new Exception("Email is already taken");
+                throw new ArgumentException("Email is already taken");
             }
+
 
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(registerUserDto.Password);
 
@@ -92,6 +102,14 @@ namespace AuthApi.BusinessLogic.Services
             return await _userRepository.GetByIdAsync(id);
         }
 
+
+        private bool IsEmailValid(string email)
+        {
+           if(string.IsNullOrEmpty(email)) return false;
+
+           if(EmailValidatonRegex.IsMatch(email)) return true;
+            return false;
+        }
         private string GenerateJwt(UserEntity user)
         {
             var claims = new[]
