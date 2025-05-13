@@ -87,6 +87,11 @@ namespace AuthApi.BusinessLogic.Services
             return await _userRepository.CheckExistenceByEmail(email);
         }
 
+        public async Task<UserInfo> GetUserById(Guid id)
+        {
+            return await _userRepository.GetByIdAsync(id);
+        }
+
         private string GenerateJwt(UserEntity user)
         {
             var claims = new[]

@@ -18,7 +18,7 @@ namespace TaskApi.BusinessLogic.AuthApiService
 
         public async Task<UserInfo> GetUserById(Guid userId)
         {
-            return (await GetAllUsersAsync()).FirstOrDefault(x => x.Id == userId);
+            return await _authApiClient.GetUserByIdAsync(userId);
         }
 
         public async Task<UserInfo> MeAsync()

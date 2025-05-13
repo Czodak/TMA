@@ -12,5 +12,6 @@ namespace AuthApi.BusinessLogic.Services
         Task<List<UserInfo>> GetAllUserInfo();
 
         Task<bool> UserExists(string email);
+        Task<UserInfo> GetUserById(Guid id);
     }
 }

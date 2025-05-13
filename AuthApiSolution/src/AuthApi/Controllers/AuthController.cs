@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.Net;
+using System.Security.Claims;
 using AuthApi.BusinessLogic.Services;
 using AuthApi.Contracts.Requests;
 using AuthApi.Contracts.Responses;
@@ -19,6 +20,7 @@ namespace AuthApi.Controllers
         }
 
         [HttpPost("register")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<IActionResult> Register([FromBody] RegisterUserRequest registerUserRequest)
         {
             var jwt = await _authService.RegisterAsync(registerUserRequest);
@@ -26,6 +28,7 @@ namespace AuthApi.Controllers
         }
 
         [HttpPost("login")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<IActionResult> Login([FromBody] LoginUserRequest loginRequest)
         {
             var jwt = await _authService.LoginAsync(loginRequest);
@@ -34,6 +37,7 @@ namespace AuthApi.Controllers
 
         [HttpGet("me")]
         [Authorize]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<ActionResult<UserInfo>> Me()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -43,6 +47,7 @@ namespace AuthApi.Controllers
 
         [HttpGet("all")]
         [Authorize]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<ActionResult<List<UserInfo>>> GetAllUsers()
         {
             var usersInfo = await _authService.GetAllUserInfo();
@@ -52,10 +57,25 @@ namespace AuthApi.Controllers
         
         [HttpGet("userExists")]
         [Authorize]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
         public async Task<ActionResult<UserInfo>> UserExists([FromQuery] string email)
         {
             var usersInfo = await _authService.UserExists(email);
             return Ok(usersInfo);
+        }
+
+        [HttpGet("get", Name ="GetUserById")]
+        [Authorize]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<ActionResult<UserInfo>> GetUserById([FromQuery] Guid id)
+        {
+            var userInfo = await _authService.GetUserById(id);
+            if(userInfo == null)
+            {
+                return NotFound();
+            }
+            return Ok(userInfo);
         }
     }
 }

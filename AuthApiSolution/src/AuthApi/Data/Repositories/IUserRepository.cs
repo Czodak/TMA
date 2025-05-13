@@ -10,6 +10,7 @@ namespace AuthApi.Data.Repositories
         Task<bool> CheckExistenceByEmail(string email);
         Task<UserInfo> GetByIdAsync(Guid userId);
 
-        Task<List<UserInfo>> GetAllUsers();        
+        Task<List<UserInfo>> GetAllUsers();
+        Task<UserInfo> GetUserById(Guid id);
     }
 }
