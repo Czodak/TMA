@@ -1,8 +1,8 @@
-﻿using TaskApi.BusinessLogic.Extensions;
+﻿using TaskApi.BusinessLogic.AuthApiService;
+using TaskApi.BusinessLogic.Extensions;
 using TaskApi.BusinessLogic.MessagesCreator;
 using TaskApi.Common.Contracts.Request;
 using TaskApi.Common.Contracts.Response;
-using TaskApi.Common.Events;
 using TaskApi.Common.Exceptions;
 using TaskApi.Common.HttpClients.Auth;
 using TaskApi.Contracts.Request;
@@ -17,19 +17,19 @@ namespace TaskApi.BusinessLogic.Services
         private readonly ITaskRepository _taskRepository;
         private readonly IMessageClient _messageClient;
         private readonly IMessageFactory _messageFactory;
-        private readonly AuthApiClient _authClient;
+        private readonly IAuthApiService _authApiService;
 
-        public TaskService(ITaskRepository taskRepository, AuthApiClient authClient, IMessageClient messageClient, IMessageFactory messageFactory)
+        public TaskService(ITaskRepository taskRepository, IAuthApiService authService, IMessageClient messageClient, IMessageFactory messageFactory)
         {
             _taskRepository = taskRepository;
-            _authClient = authClient;
+            _authApiService = authService;
             _messageClient = messageClient;
             _messageFactory = messageFactory;
         }
 
         public async Task CreateTaskAsync(CreateTaskRequest createTaskRequest)
         {
-            var currentlyLoggenInUser = await _authClient.MeAsync();
+            var currentlyLoggenInUser = await _authApiService.MeAsync();
 
             if (currentlyLoggenInUser == null)
             {
@@ -105,7 +105,7 @@ namespace TaskApi.BusinessLogic.Services
             UserInfo user = null;
             if (updateTaskAssigmentDto.NewAssignedUser != null)
             {
-                user = (await _authClient.AllAsync()).FirstOrDefault(x => x.Id == updateTaskAssigmentDto.NewAssignedUser);
+                user = await _authApiService.GetUserById(updateTaskAssigmentDto.NewAssignedUser.Value);
                 if(user == null)
                 {
                     throw new NotFoundException("User with given id was not found");

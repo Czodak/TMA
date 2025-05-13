@@ -1,4 +1,5 @@
-﻿using TaskApi.BusinessLogic.MessagesCreator;
+﻿using TaskApi.BusinessLogic.AuthApiService;
+using TaskApi.BusinessLogic.MessagesCreator;
 using TaskApi.Common.Events;
 using TaskApi.Common.HttpClients.Auth;
 using TaskApi.Data.Entities;
@@ -7,11 +8,11 @@ namespace TaskApi.BusinessLogic.MessagesFactory
 {
     public class MessageFactory : IMessageFactory
     {
-        private readonly AuthApiClient _authApiClient;
+        private readonly IAuthApiService _authApiService;
 
-        public MessageFactory(AuthApiClient authApiClient)
+        public MessageFactory(IAuthApiService authApiService)
         {
-            _authApiClient = authApiClient;
+            _authApiService = authApiService;
         }
 
         public TaskAssignementUpdatedEvent GetTaskAssignementUpdatedEvent(Tasks task, UserInfo user)
@@ -57,7 +58,7 @@ namespace TaskApi.BusinessLogic.MessagesFactory
             }
 
             //to be changed
-            var user = (await _authApiClient.AllAsync()).FirstOrDefault(x => x.Id == task.CurrentlyAssignedUserId);
+            var user = (await _authApiService.GetAllUsersAsync()).FirstOrDefault(x => x.Id == task.CurrentlyAssignedUserId);
 
             return user;
         }

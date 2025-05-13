@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using TaskApi.BusinessLogic.AuthApiService;
 using TaskApi.BusinessLogic.MessagesCreator;
 using TaskApi.BusinessLogic.MessagesFactory;
 using TaskApi.BusinessLogic.Services;
@@ -93,6 +94,8 @@ namespace TaskApi
 
                 return client;
             });
+
+            builder.Services.AddScoped<IAuthApiService, AuthApiService>();
 
             var app = builder.Build();
 
