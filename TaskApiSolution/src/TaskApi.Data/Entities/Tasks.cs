@@ -18,7 +18,6 @@ namespace TaskApi.Data.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime CreatedAt { get; set; }
         
-        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime LastUpdatedAt { get; set; }
         public TaskStatuses Status { get; set; }
         public int Priority { get; set; }

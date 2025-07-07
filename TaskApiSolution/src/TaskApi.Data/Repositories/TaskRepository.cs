@@ -73,6 +73,7 @@ namespace TaskApi.Data.Repositories
 
         public async Task UpdateTaskAsync(Tasks task)
         {
+            task.LastUpdatedAt = DateTime.UtcNow;
             _dbContext.Tasks.Update(task);
             await _dbContext.SaveChangesAsync();
         }
@@ -81,6 +82,7 @@ namespace TaskApi.Data.Repositories
         {
             _dbContext.Tasks.Attach(task);
             task.Status = newStatus;
+            task.LastUpdatedAt = DateTime.UtcNow;
             _dbContext.Entry(task).Property(p => p.Status).IsModified = true;
 
             await _dbContext.SaveChangesAsync();
