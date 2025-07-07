@@ -19,7 +19,12 @@ namespace TaskApi.Messaging.Client
 
         public async Task SendMessage(ITaskEvent taskEvent)
         {
-            var factory = new ConnectionFactory { HostName = _rabbitMqConfig.Host };
+            var factory = new ConnectionFactory 
+            { 
+                HostName = _rabbitMqConfig.Host,
+                UserName = _rabbitMqConfig.User,
+                Password = _rabbitMqConfig.Password
+            };
             using var connection = await factory.CreateConnectionAsync();
             using var channel = await connection.CreateChannelAsync();
 

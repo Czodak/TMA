@@ -3,6 +3,7 @@ using System.Text.Json;
 using NotificationService.EventHandling;
 using System.Text.Json.Serialization.Metadata;
 using System.Net.Mail;
+using NotificationService.MessageClient;
 
 namespace NotificationService
 {
@@ -13,7 +14,7 @@ namespace NotificationService
             var builder = Host.CreateApplicationBuilder(args);
             builder.Services.AddHostedService<Worker>();
             builder.Services.AddScoped<IMessageEventHandler, MessageEventHandler>();
-
+            builder.Services.AddSingleton<IMessageClient, RabbitMqMessageClient>();
             builder.Services.Configure<JsonPolymorphismOptions>(options =>
             {
                 options.TypeDiscriminatorPropertyName = "eventType";
@@ -27,7 +28,7 @@ namespace NotificationService
 
             builder.Services
                 .AddFluentEmail("test@test.pl")
-                .AddSmtpSender(new SmtpClient("smtp4dev")
+                .AddSmtpSender(() => new SmtpClient("smtp4dev")
                 {
                     Port = 25,
                     EnableSsl = false

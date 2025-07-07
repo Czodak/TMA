@@ -17,6 +17,8 @@ services:
         interval: 5s
         timeout: 5s
         retries: 5
+    volumes:
+     - rabbitmq_data:/var/lib/rabbitmq 
 
   sql_taskapi:
     image: "mcr.microsoft.com/mssql/server:2022-latest"
@@ -177,3 +179,4 @@ volumes:
   mssql_taskapi:
   mssql_authapi:
   smtp4dev-data:  
+  rabbitmq_data:  

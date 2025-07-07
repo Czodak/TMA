@@ -6,6 +6,7 @@ using NotificationService.EventHandling;
 using NotificationService.Events;
 using NotificationService.Events.Base;
 using NotificationService.Events.Common;
+using NotificationService.MessageClient;
 using Polly;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -18,10 +19,10 @@ namespace NotificationService
         private readonly ILogger<Worker> _logger;
         private readonly IConfiguration _configuration;        
         private JsonSerializerOptions _jsonOptions;
-        private IConnection _connection;
-        private IChannel _channel;
+        private readonly IMessageClient _messageClient;
         private readonly string _queueName;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly string ERROR_QUEUE_MESSAGE = "messages_error";
 
 
         private static readonly Dictionary<TaskEventType, Type> _eventTypeMap = new()
@@ -31,83 +32,57 @@ namespace NotificationService
             { TaskEventType.TaskStatusUpdated, typeof(TaskStatusUpdatedEvent) }
         };
 
-        public Worker(ILogger<Worker> logger, IConfiguration configuration, IOptions<JsonSerializerOptions> jsonOptions, IServiceScopeFactory serviceScopeFactory)
+        public Worker(ILogger<Worker> logger, IConfiguration configuration, IOptions<JsonSerializerOptions> jsonOptions, IServiceScopeFactory serviceScopeFactory, IMessageClient messageClient)
         {
             _logger = logger;
             _configuration = configuration;
             _jsonOptions = jsonOptions.Value;
             _queueName = "messages";
             _scopeFactory = serviceScopeFactory;
-        }
-
-        private async Task<IConnection> GetConnection()
-        {
-            var factory = new ConnectionFactory()
-            {
-                HostName = _configuration["RabbitMq:Host"],
-                Port = int.Parse(_configuration["RabbitMq:Port"]),
-            };
-
-            var policy = Policy
-                .Handle<BrokerUnreachableException>()
-                .Or<ConnectFailureException>()
-                .Or<SocketException>()
-                .WaitAndRetryAsync(
-                    retryCount: 10,
-                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), //exponential waiting
-                    onRetry: (ex, time) =>
-                    {
-                        Console.WriteLine($"RabbitMQ not reachable yet, Retrying in {time.TotalSeconds} seconds");
-                    }
-                );
-
-            return await policy.ExecuteAsync(async() => await factory.CreateConnectionAsync());
+            _messageClient = messageClient;
         }
 
         private async Task InitializeRabbitMq()
         {
-            _connection = await GetConnection();
-
-            _channel = await _connection.CreateChannelAsync();
-
-            await _channel.QueueDeclareAsync(queue: _queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
+            await _messageClient.CreateConnectionAsync();
+            await _messageClient.DeclareQueueAsync(_queueName);
+            await _messageClient.DeclareQueueAsync( ERROR_QUEUE_MESSAGE);
 
             Console.WriteLine($"--> Listening on message bus");
-
-            _connection.ConnectionShutdownAsync += RabbitMQ_ConnectionShutdown;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             await InitializeRabbitMq();
 
-            var consumer = new AsyncEventingBasicConsumer(_channel);
-
-            consumer.ReceivedAsync += async (ModuleHandle, ea) =>
+            await _messageClient.RegisterConsumer(_queueName, async (channel, body, deliveryTag) =>
             {
                 try
                 {
                     Console.WriteLine("--> event recievied!");
-
-                    var body = ea.Body;
-                    var notificationMessage = Encoding.UTF8.GetString(body.ToArray());
+                    
+                    var notificationMessage = Encoding.UTF8.GetString(body);
                     var deserializedMessage = DeserializeEvent(notificationMessage);
 
-                    //it can't be created at  contructor level, becasue the Worker class is created only once. So injecting scoped service into singletion
-                    //wont work correctly, after some time, the smtp service will throw connection issues.
                     using var scope = _scopeFactory.CreateScope();
                     var messageEventHandler = scope.ServiceProvider.GetRequiredService<IMessageEventHandler>();
 
-                    await messageEventHandler.HandleEvent(deserializedMessage);
-                    await _channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false);
+                    try
+                    {
+                        await messageEventHandler.HandleEvent(deserializedMessage);
+                    }
+                    catch
+                    {
+                        var errorBody = Encoding.UTF8.GetBytes(notificationMessage);
+                        await _messageClient.PublishAsync(ERROR_QUEUE_MESSAGE, errorBody);
+                    }
+                    await channel.BasicAckAsync(deliveryTag, false);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Fail, {ex.Message}");
                 }
-            };
-
-            await _channel.BasicConsumeAsync(queue: _queueName, autoAck: false, consumer: consumer);
+            });
 
             // Keep the service running until cancellation is requested
             while (!stoppingToken.IsCancellationRequested)
@@ -131,22 +106,10 @@ namespace NotificationService
             return (ITaskEvent)JsonSerializer.Deserialize(message, concreteType);
         }
 
-        private async Task RabbitMQ_ConnectionShutdown(object sender, ShutdownEventArgs e)
-        {
-            Console.WriteLine("--> rabbitMq connection shutdown");
-            await Task.CompletedTask;
-        }
-
-
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            if (_channel.IsOpen)
-            {
-                await _channel.CloseAsync();
-                await _connection.CloseAsync();
-            }
-
-            await base.StopAsync(cancellationToken);
+           await _messageClient.StopAsync(cancellationToken);
+           await base.StopAsync(cancellationToken);
         }
     }
 }

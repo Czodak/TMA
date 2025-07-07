@@ -74,14 +74,17 @@ namespace NotificationService.EventHandling
                 {
                     Console.WriteLine($"Inner excpt : {smtpEx.InnerException.Message}");
                 }
+                throw;
             }
             catch (FormatException e)
             {
                 Console.WriteLine($"Invalid email format: {e.Message}");
+                throw;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Send failed, message {ex.Message}, stacktrace {ex.StackTrace}");
+                throw;
             }
         }
     }
