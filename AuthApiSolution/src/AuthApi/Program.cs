@@ -6,6 +6,7 @@ using AuthApi.Data.Repositories;
 using AuthApi.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 
 namespace AuthApi
 {
@@ -20,6 +21,12 @@ namespace AuthApi
                     builder.Configuration.GetConnectionString("Database")
                 )
             );
+            builder.Logging.ClearProviders();
+            builder.Host.UseSerilog((ctx, lc) => lc
+               .ReadFrom.Configuration(ctx.Configuration)
+               .WriteTo.Console()
+               .WriteTo.Seq("http://seq:5341")
+           );
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -27,7 +34,6 @@ namespace AuthApi
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IAuthService, AuthService>();
 
-            builder.Services.AddLogging();
             builder.Services.AddAuthorization();
 
             builder.Services.AddAuthentication("Bearer")
@@ -52,9 +58,9 @@ namespace AuthApi
 
             var app = builder.Build();
 
+            app.UseRouting();
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
@@ -62,7 +68,7 @@ namespace AuthApi
 
             app.UseAuthentication();
             app.UseAuthorization();
-            
+
             app.MapControllers();
 
             app.Run();

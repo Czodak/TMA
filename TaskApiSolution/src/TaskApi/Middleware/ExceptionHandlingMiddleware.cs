@@ -22,7 +22,7 @@ namespace TaskApi.Middleware
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Something went wrong. {ex.Message}, exception type {ex.GetType()}");
+                _logger.LogError(ex, "Something went wrong");
 
                 httpContext.Response.ContentType = "application/json";
 
@@ -45,6 +45,7 @@ namespace TaskApi.Middleware
                 }
 
                 await response.WriteAsJsonAsync(errorResponse);
+                return;
             }
         }
     }

@@ -1,8 +1,8 @@
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using TaskApi.BusinessLogic.AuthApiService;
 using TaskApi.BusinessLogic.MessagesCreator;
 using TaskApi.BusinessLogic.MessagesFactory;
@@ -23,6 +23,12 @@ namespace TaskApi
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+
+            builder.Host.UseSerilog((ctx, lc) => lc
+                .ReadFrom.Configuration(ctx.Configuration)
+                .WriteTo.Console()
+                .WriteTo.Seq("http://seq:5341")
+            );
 
             var connectionString =
                 builder.Configuration.GetConnectionString("Database")

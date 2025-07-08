@@ -80,7 +80,7 @@ namespace NotificationService
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Fail, {ex.Message}");
+                    _logger.LogError(ex, $"There was an error when trying to process the message.");
                 }
             });
 

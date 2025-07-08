@@ -175,8 +175,29 @@ services:
       - ServerOptions__Urls=http://*:80
       - ServerOptions__HostName=smtp4dev
 
+  seq:
+    image: datalust/seq:latest
+    container_name: "seq"
+    ports:
+      - "5341:5341" #Http 
+      - "8090:80" #web ui
+    volumes:
+      - ./seq-data:/data
+    env_file:
+      - .env
+    environment:
+      ACCEPT_EULA: "Y"
+      SEQ_FIRSTRUN_ADMINPASSWORD: ${SEQ_ADMIN_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5341/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  
+
 volumes:
   mssql_taskapi:
   mssql_authapi:
   smtp4dev-data:  
-  rabbitmq_data:  
+  rabbitmq_data: 
+  seq-data:  

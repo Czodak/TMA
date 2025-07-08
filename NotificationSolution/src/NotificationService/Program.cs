@@ -4,6 +4,7 @@ using NotificationService.EventHandling;
 using System.Text.Json.Serialization.Metadata;
 using System.Net.Mail;
 using NotificationService.MessageClient;
+using Serilog;
 
 namespace NotificationService
 {
@@ -19,6 +20,14 @@ namespace NotificationService
             {
                 options.TypeDiscriminatorPropertyName = "eventType";
             });
+
+            builder.Logging.ClearProviders();
+            builder.Logging.AddSerilog(new LoggerConfiguration()
+               .ReadFrom.Configuration(builder.Configuration)
+               .WriteTo.Console()
+               .WriteTo.Seq("http://seq:5341")
+               .CreateLogger()
+           );
 
             builder.Services.Configure<JsonSerializerOptions>(options =>
             {
