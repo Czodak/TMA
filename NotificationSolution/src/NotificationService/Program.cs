@@ -21,13 +21,13 @@ namespace NotificationService
                 options.TypeDiscriminatorPropertyName = "eventType";
             });
 
-            builder.Logging.ClearProviders();
-            builder.Logging.AddSerilog(new LoggerConfiguration()
-               .ReadFrom.Configuration(builder.Configuration)
+            var logger = new LoggerConfiguration()
                .WriteTo.Console()
                .WriteTo.Seq("http://seq:5341")
-               .CreateLogger()
-           );
+               .CreateLogger();
+
+            builder.Logging.ClearProviders();
+            builder.Logging.AddSerilog(logger);
 
             builder.Services.Configure<JsonSerializerOptions>(options =>
             {

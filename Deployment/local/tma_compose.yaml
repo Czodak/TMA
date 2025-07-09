@@ -5,7 +5,6 @@ services:
     image: "rabbitmq:3-management"
     container_name: "rabbitmq"
     ports:
-      - "5672:5672"
       - "15672:15672"
     env_file:
       - .env
@@ -84,11 +83,13 @@ services:
     build:
         context: ../../AuthapiSolution/src/AuthApi
         target: final
+    labels:
+     - "traefik.enable=true"
+     - "traefik.http.routers.authapi.rule=Host(`authapi.localhost`)"
+     - "traefik.http.services.authapi.loadbalancer.server.port=8080"
     depends_on:
       - sql_authapi
       - authapi-migrator
-    ports:
-      - "8082:8080"
     env_file:
       - .env
     environment:
@@ -113,11 +114,13 @@ services:
 
   taskapi:
     build: ../../TaskApiSolution
+    labels:
+     - "traefik.enable=true"
+     - "traefik.http.routers.taskapi.rule=Host(`taskapi.localhost`)"
+     - "traefik.http.services.taskapi.loadbalancer.server.port=8080"
     depends_on:
       - rabbitmq
       - sql_taskapi
-    ports:
-      - "8081:8080"
     env_file:
       - .env
     environment:
@@ -165,10 +168,6 @@ services:
     ports:
       # web interface port
       - '5080:80'
-      # SMTP server port
-      - '2525:25'
-      # IMAP server port
-      - '143:143'
     volumes:
         - smtp4dev-data:/smtp4dev
     environment:      
@@ -179,7 +178,6 @@ services:
     image: datalust/seq:latest
     container_name: "seq"
     ports:
-      - "5341:5341" #Http 
       - "8090:80" #web ui
     volumes:
       - ./seq-data:/data
@@ -189,10 +187,24 @@ services:
       ACCEPT_EULA: "Y"
       SEQ_FIRSTRUN_ADMINPASSWORD: ${SEQ_ADMIN_PASSWORD}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5341/"]
+      test: ["CMD", "curl", "-f", "http://seq:5341/"]
       interval: 30s
       timeout: 10s
       retries: 5
+
+  traefik:
+    image: traefik:v2.11
+    container_name: "traefik"
+    command:
+      - "--api.insecure=true" #dashboard, fine for local env, not safe for production
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080" # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
   
 
 volumes:
