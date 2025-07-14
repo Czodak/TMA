@@ -1,7 +1,4 @@
-﻿
-
-using System.IdentityModel.Tokens.Jwt;
-using System.Net.Mail;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -10,7 +7,6 @@ using AuthApi.Contracts.Responses;
 using AuthApi.Data.Entities;
 using AuthApi.Data.Repositories;
 using AuthApi.Exceptions;
-using Azure.Core;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AuthApi.BusinessLogic.Services

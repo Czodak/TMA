@@ -47,8 +47,7 @@ namespace NotificationService
             await _messageClient.CreateConnectionAsync();
             await _messageClient.DeclareQueueAsync(_queueName);
             await _messageClient.DeclareQueueAsync( ERROR_QUEUE_MESSAGE);
-
-            Console.WriteLine($"--> Listening on message bus");
+            _logger.LogInformation("Listening on message bus");
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -58,9 +57,7 @@ namespace NotificationService
             await _messageClient.RegisterConsumer(_queueName, async (channel, body, deliveryTag) =>
             {
                 try
-                {
-                    Console.WriteLine("--> event recievied!");
-                    
+                {                    
                     var notificationMessage = Encoding.UTF8.GetString(body);
                     var deserializedMessage = DeserializeEvent(notificationMessage);
 

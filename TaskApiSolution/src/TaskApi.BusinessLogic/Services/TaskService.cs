@@ -56,10 +56,6 @@ namespace TaskApi.BusinessLogic.Services
 
         public async Task<ReadTaskDto> GetTaskByIdAsync(int taskId)
         {
-            if (taskId < 0)
-            {
-                throw new ArgumentException("TaskId cant be less than 0");
-            }
             return await _taskRepository.GetTaskDtoByIdAsync(taskId);
         }
 
@@ -84,15 +80,6 @@ namespace TaskApi.BusinessLogic.Services
             await _messageClient.SendMessage(taskStatusUpdatedEvent);
         }
 
-        private async Task<Tasks> GetTaskById(int taskId)
-        {
-            var existingTask = await _taskRepository.GetTaskByIdAsync(taskId);
-            if (existingTask == null)
-            {
-                throw new NotFoundException("Task with given id was not found");
-            }
-            return existingTask;
-        }
         public async Task ChangeTaskAssignment(UpdateTaskAssigmentDto updateTaskAssigmentDto)
         {
             var existingTask = await GetTaskById(updateTaskAssigmentDto.Id);
@@ -121,6 +108,16 @@ namespace TaskApi.BusinessLogic.Services
 
             var message = _messageFactory.GetTaskAssignementUpdatedEvent(existingTask, user);
             await _messageClient.SendMessage(message);
+        }
+
+        private async Task<Tasks> GetTaskById(int taskId)
+        {
+            var existingTask = await _taskRepository.GetTaskByIdAsync(taskId);
+            if (existingTask == null)
+            {
+                throw new NotFoundException("Task with given id was not found");
+            }
+            return existingTask;
         }
     }
 }

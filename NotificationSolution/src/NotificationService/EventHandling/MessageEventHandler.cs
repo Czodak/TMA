@@ -10,10 +10,12 @@ namespace NotificationService.EventHandling
     public class MessageEventHandler : IMessageEventHandler
     {
         private readonly IFluentEmail _emailSender;
+        private ILogger<MessageEventHandler> _logger;
 
-        public MessageEventHandler(IFluentEmail emailSender)
+        public MessageEventHandler(IFluentEmail emailSender, ILogger<MessageEventHandler> logger)
         {
             _emailSender = emailSender;
+            _logger = logger;
         }
 
         public async Task HandleEvent(ITaskEvent taskEvent)
@@ -58,8 +60,6 @@ namespace NotificationService.EventHandling
                 var toAddress = new MailAddress(emailMessage.To);
                 var fromAddress = new MailAddress(_emailSender.Data.FromAddress.EmailAddress);
 
-                Console.WriteLine($"To: {toAddress.Address}, From: {fromAddress.Address}");
-
                 await _emailSender
                     .To(toAddress.Address)
                     .SetFrom(fromAddress.Address)
@@ -69,21 +69,17 @@ namespace NotificationService.EventHandling
             }
             catch(SmtpException smtpEx)
             {
-                Console.WriteLine($"SMTP error : {smtpEx.StatusCode}, message : {smtpEx.Message}");
-                if(smtpEx.InnerException != null)
-                {
-                    Console.WriteLine($"Inner excpt : {smtpEx.InnerException.Message}");
-                }
+                _logger.LogError(smtpEx, $"SMTP error");
                 throw;
             }
             catch (FormatException e)
             {
-                Console.WriteLine($"Invalid email format: {e.Message}");
+                _logger.LogError(e, $"Invalid email format");
                 throw;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Send failed, message {ex.Message}, stacktrace {ex.StackTrace}");
+                _logger.LogError(ex, $"Send failed");
                 throw;
             }
         }

@@ -11,10 +11,12 @@ namespace NotificationService.MessageClient
         private IConfiguration _configuration;
         private IConnection _connection;
         private IChannel _channel;
+        private ILogger<RabbitMqMessageClient> _logger;
 
-        public RabbitMqMessageClient(IConfiguration configuration)
+        public RabbitMqMessageClient(IConfiguration configuration, ILogger<RabbitMqMessageClient> logger)
         {
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task CreateConnectionAsync()
@@ -36,7 +38,7 @@ namespace NotificationService.MessageClient
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), //exponential waiting
                     onRetry: (ex, time) =>
                     {
-                        Console.WriteLine($"RabbitMQ not reachable yet, Retrying in {time.TotalSeconds} seconds");
+                        _logger.LogWarning($"RabbitMQ not reachable yet, Retrying in {time.TotalSeconds} seconds");
                     }
                 );
 
@@ -89,7 +91,7 @@ namespace NotificationService.MessageClient
 
         private async Task RabbitMQ_ConnectionShutdown(object sender, ShutdownEventArgs e)
         {
-            Console.WriteLine("--> rabbitMq connection shutdown");
+            _logger.LogWarning("--> rabbitMq connection shutdown");
             await Task.CompletedTask;
         }
     }

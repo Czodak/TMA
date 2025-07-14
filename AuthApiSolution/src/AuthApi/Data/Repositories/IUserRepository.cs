@@ -11,6 +11,5 @@ namespace AuthApi.Data.Repositories
         Task<UserInfo> GetByIdAsync(Guid userId);
 
         Task<List<UserInfo>> GetAllUsers();
-        Task<UserInfo> GetUserById(Guid id);
     }
 }

@@ -41,12 +41,5 @@ namespace AuthApi.Data.Repositories
                 .Select(u => new UserInfo(u.Id, u.Email, u.Name, u.LastName))
                 .ToListAsync();
         }
-
-        public async Task<UserInfo> GetUserById(Guid id)
-        {
-            return await _dbContext.Users
-                .Select(u => new UserInfo(u.Id, u.Email, u.Name, u.LastName))
-                .Where(u => u.Id == id).FirstOrDefaultAsync();
-        }
     }
 }
