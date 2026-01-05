@@ -57,8 +57,7 @@ namespace TaskApi.BusinessLogic.MessagesFactory
                 return null;
             }
 
-            //to be changed
-            var user = (await _authApiService.GetAllUsersAsync()).FirstOrDefault(x => x.Id == task.CurrentlyAssignedUserId);
+            var user = await _authApiService.GetUserById(task.CurrentlyAssignedUserId.Value);
 
             return user;
         }

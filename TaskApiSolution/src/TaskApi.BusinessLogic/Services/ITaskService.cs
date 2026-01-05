@@ -14,5 +14,6 @@ namespace TaskApi.BusinessLogic.Services
         Task UpdateTaskAsync(UpdateTaskDto updateTaskDto);
         Task UpdateTaskStatusAsync(UpdateTaskStatusDto updateTaskStatusDto);
         Task ChangeTaskAssignment(UpdateTaskAssigmentDto updateTaskAssigmentDto);
+        Task ClearTaskAssignment(int taskId);
     }
 }

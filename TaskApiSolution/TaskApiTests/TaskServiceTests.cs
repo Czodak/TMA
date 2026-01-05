@@ -188,7 +188,7 @@ namespace TaskApiTests
                 NewAssignedUser = Guid.NewGuid()
             };
             var user = new UserInfo();
-            _authApiService.GetUserById(updateTaskAssigmentDto.NewAssignedUser.Value).Returns(user);
+            _authApiService.GetUserById(updateTaskAssigmentDto.NewAssignedUser).Returns(user);
 
             var message = new TaskAssignementUpdatedEvent(string.Empty, string.Empty);
             _messageFactory.GetTaskAssignementUpdatedEvent(_existingTask, user).Returns(message);
@@ -212,7 +212,7 @@ namespace TaskApiTests
                 Id = TASK_ID,
                 NewAssignedUser = _currentlyLoggedInUser.Id
             };
-            _authApiService.GetUserById(updateTaskAssigmentDto.NewAssignedUser.Value).Returns(_currentlyLoggedInUser);
+            _authApiService.GetUserById(updateTaskAssigmentDto.NewAssignedUser).Returns(_currentlyLoggedInUser);
 
             //Act
             await _sut.ChangeTaskAssignment(updateTaskAssigmentDto);
@@ -233,7 +233,7 @@ namespace TaskApiTests
                 NewAssignedUser = Guid.NewGuid()
             };
             UserInfo? user = null;
-            _authApiService.GetUserById(updateTaskAssigmentDto.NewAssignedUser.Value).Returns(user);
+            _authApiService.GetUserById(updateTaskAssigmentDto.NewAssignedUser).Returns(user);
 
             //Act
             await Assert.ThrowsAsync<NotFoundException>(() => _sut.ChangeTaskAssignment(updateTaskAssigmentDto));

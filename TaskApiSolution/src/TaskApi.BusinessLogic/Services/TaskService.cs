@@ -88,15 +88,11 @@ namespace TaskApi.BusinessLogic.Services
             {
                 return;
             }
-
-            UserInfo user = null;
-            if (updateTaskAssigmentDto.NewAssignedUser != null)
+            
+            var user = await _authApiService.GetUserById(updateTaskAssigmentDto.NewAssignedUser);
+            if(user == null)
             {
-                user = await _authApiService.GetUserById(updateTaskAssigmentDto.NewAssignedUser.Value);
-                if(user == null)
-                {
-                    throw new NotFoundException("User with given id was not found");
-                }
+                throw new NotFoundException("User with given id was not found");
             }
             
             await _taskRepository.UpdateAssignmentAsync(existingTask, updateTaskAssigmentDto);
@@ -108,6 +104,18 @@ namespace TaskApi.BusinessLogic.Services
 
             var message = _messageFactory.GetTaskAssignementUpdatedEvent(existingTask, user);
             await _messageClient.SendMessage(message);
+        }
+
+        public async Task ClearTaskAssignment(int taskId)
+        {
+            var existingTask = await GetTaskById(taskId);
+            if(existingTask.CurrentlyAssignedUserId == null)
+            {
+                return;
+            }
+
+            existingTask.CurrentlyAssignedUserId = null;
+            await _taskRepository.UpdateTaskAsync(existingTask);
         }
 
         private async Task<Tasks> GetTaskById(int taskId)

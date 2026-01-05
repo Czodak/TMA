@@ -68,5 +68,13 @@ namespace TaskApi.Controllers
             await _taskService.ChangeTaskAssignment(updateTaskAssignmentDto);
             return Ok();
         }
+
+        [HttpPatch("clearAssignement")]
+        [Authorize]
+        public async Task<IActionResult> ClearTaskAssignment([FromRoute] int taskId)
+        {
+            await _taskService.ClearTaskAssignment(taskId);
+            return Ok();
+        }
     }
 }

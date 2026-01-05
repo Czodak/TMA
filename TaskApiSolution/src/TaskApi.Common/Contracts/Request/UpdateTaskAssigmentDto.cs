@@ -7,7 +7,6 @@ namespace TaskApi.Common.Contracts.Request
         [Required]
         public int Id { get; set; }
 
-        //null = usassign user.
-        public Guid? NewAssignedUser{ get; set; }
+        public Guid NewAssignedUser{ get; set; }
     }
 }
