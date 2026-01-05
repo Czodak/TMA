@@ -1,28 +1,27 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace AuthApi.Data.Entities
+namespace AuthApi.Data.Entities;
+
+[Table("Users")]
+public class UserEntity
 {
-    [Table("Users")]
-    public class UserEntity
-    {
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid Id { get; set; }
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public Guid Id { get; set; }
 
-        [Required]
-        [MaxLength(255)]
-        public string Email { get; set; }
+    [Required]
+    [MaxLength(255)]
+    public string Email { get; set; }
 
-        [Required]
-        public string PasswordHash { get; set; }
+    [Required]
+    public string PasswordHash { get; set; }
 
-        [Required, MaxLength(255)]
-        public string Name { get; set; }
+    [Required, MaxLength(255)]
+    public string Name { get; set; }
 
-        [Required, MaxLength(255)]
-        public string LastName { get; set; }
+    [Required, MaxLength(255)]
+    public string LastName { get; set; }
 
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    }
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

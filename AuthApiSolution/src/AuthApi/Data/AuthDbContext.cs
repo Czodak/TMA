@@ -1,33 +1,32 @@
 ﻿using AuthApi.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace AuthApi.Data
+namespace AuthApi.Data;
+
+public class AuthDbContext : DbContext
 {
-    public class AuthDbContext : DbContext
+    public AuthDbContext(DbContextOptions options) : base(options)
     {
-        public AuthDbContext(DbContextOptions options) : base(options)
+    }
+
+    public DbSet<UserEntity> Users { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<UserEntity>(entity =>
         {
-        }
+            entity.HasKey(u => u.Id);
 
-        public DbSet<UserEntity> Users { get; set; }
+            entity.HasIndex(u => u.Email)
+                  .IsUnique();
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<UserEntity>(entity =>
-            {
-                entity.HasKey(u => u.Id);
+            entity.Property(u => u.Id)
+                  .HasDefaultValueSql("NEWSEQUENTIALID()");
 
-                entity.HasIndex(u => u.Email)
-                      .IsUnique();
+            entity.Property(u => u.CreatedAt)
+                  .HasDefaultValueSql("GETUTCDATE()");
+        });
 
-                entity.Property(u => u.Id)
-                      .HasDefaultValueSql("NEWSEQUENTIALID()");
-
-                entity.Property(u => u.CreatedAt)
-                      .HasDefaultValueSql("GETUTCDATE()");
-            });
-
-            base.OnModelCreating(modelBuilder); 
-        }
+        base.OnModelCreating(modelBuilder); 
     }
 }

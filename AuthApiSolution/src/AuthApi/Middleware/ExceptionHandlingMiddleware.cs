@@ -1,53 +1,52 @@
 ﻿using AuthApi.Exceptions;
 
-namespace AuthApi.Middleware
+namespace AuthApi.Middleware;
+
+public class ExceptionHandlingMiddleware
 {
-    public class ExceptionHandlingMiddleware
+
+    private readonly RequestDelegate _next;
+    private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+
+    public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
     {
+        _next = next;
+        _logger = logger;
+    }
 
-        private readonly RequestDelegate _next;
-        private readonly ILogger<ExceptionHandlingMiddleware> _logger;
-
-        public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+    public async Task InvokeAsync(HttpContext httpContext)
+    {
+        try
         {
-            _next = next;
-            _logger = logger;
+            await _next(httpContext);
         }
-
-        public async Task InvokeAsync(HttpContext httpContext)
+        catch (Exception ex)
         {
-            try
+            _logger.LogError(ex, "Something went wrong.");
+
+            httpContext.Response.ContentType = "application/json";
+
+            var response = httpContext.Response;
+            var errorResponse = new
             {
-                await _next(httpContext);
+                error = ex.Message
+            };
+
+            switch (ex)
+            {                    
+                case NotFoundException:
+                    response.StatusCode = StatusCodes.Status404NotFound;
+                    break;
+                case ArgumentException:
+                    response.StatusCode = StatusCodes.Status400BadRequest;
+                    break;
+                default:
+                    response.StatusCode = StatusCodes.Status500InternalServerError;
+                    errorResponse = new { error = "An unexpected error occurred" };
+                    break;
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Something went wrong.");
 
-                httpContext.Response.ContentType = "application/json";
-
-                var response = httpContext.Response;
-                var errorResponse = new
-                {
-                    error = ex.Message
-                };
-
-                switch (ex)
-                {                    
-                    case NotFoundException:
-                        response.StatusCode = StatusCodes.Status404NotFound;
-                        break;
-                    case ArgumentException:
-                        response.StatusCode = StatusCodes.Status400BadRequest;
-                        break;
-                    default:
-                        response.StatusCode = StatusCodes.Status500InternalServerError;
-                        errorResponse = new { error = "An unexpected error occurred" };
-                        break;
-                }
-
-                await response.WriteAsJsonAsync(errorResponse);
-            }
+            await response.WriteAsJsonAsync(errorResponse);
         }
     }
 }

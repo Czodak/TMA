@@ -1,6 +1,6 @@
-
 using System.Text;
-using AuthApi.BusinessLogic.Services;
+using AuthApi.BusinessLogic.Services.Implementation;
+using AuthApi.BusinessLogic.Services.Interfaces;
 using AuthApi.Data;
 using AuthApi.Data.Repositories;
 using AuthApi.Middleware;
@@ -8,70 +8,74 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 
-namespace AuthApi
+namespace AuthApi;
+
+public class Program
 {
-    public class Program
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
-        {
-            var builder = WebApplication.CreateBuilder(args);
-            
-            builder.Services.AddDbContext<AuthDbContext>(options =>
-                options.UseSqlServer(
-                    builder.Configuration.GetConnectionString("Database")
-                )
-            );
-            builder.Logging.ClearProviders();
-            builder.Host.UseSerilog((ctx, lc) => lc
-               .ReadFrom.Configuration(ctx.Configuration)
-               .WriteTo.Console()
-               .WriteTo.Seq("http://seq:5341")
-           );
+        var builder = WebApplication.CreateBuilder(args);
+        
+        builder.Services.AddDbContext<AuthDbContext>(options =>
+            options.UseSqlServer(
+                builder.Configuration.GetConnectionString("Database")
+            )
+        );
+        builder.Logging.ClearProviders();
+        builder.Host.UseSerilog((ctx, lc) => lc
+           .ReadFrom.Configuration(ctx.Configuration)
+           .WriteTo.Console()
+           .WriteTo.Seq("http://seq:5341")
+       );
 
-            builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddControllers();
+        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+        builder.Services.AddOpenApi();
 
-            builder.Services.AddAuthorization();
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<ILoginService, LoginService>();
+        builder.Services.AddScoped<IRegistrationService, RegistrationService>();
+        builder.Services.AddSingleton<IJwtService, JwtService>();
+        
 
-            builder.Services.AddAuthentication("Bearer")
-                .AddJwtBearer("Bearer", options =>
-                {
-                    options.RequireHttpsMetadata = false; // not production ready !!!
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidIssuer = "AuthApi",
+        builder.Services.AddAuthorization();
 
-                        ValidateAudience = true,
-                        ValidAudience = "TaskApi",
-
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"])),
-
-                        ValidateLifetime = true
-                    };
-                });
-
-            var app = builder.Build();
-
-            app.UseRouting();
-            app.UseMiddleware<ExceptionHandlingMiddleware>();
-
-            if (app.Environment.IsDevelopment())
+        builder.Services.AddAuthentication("Bearer")
+            .AddJwtBearer("Bearer", options =>
             {
-                app.MapOpenApi();
-            }
+                options.RequireHttpsMetadata = false; // not production ready !!!
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = "AuthApi",
 
-            app.UseAuthentication();
-            app.UseAuthorization();
+                    ValidateAudience = true,
+                    ValidAudience = "TaskApi",
 
-            app.MapControllers();
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"])),
 
-            app.Run();
+                    ValidateLifetime = true
+                };
+            });
+
+        var app = builder.Build();
+
+        app.UseRouting();
+        app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapOpenApi();
         }
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.MapControllers();
+
+        app.Run();
     }
 }

@@ -1,16 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace AuthApi.Controllers
-{
-    [Route("api/[controller]")]
-    [ApiController]
-    public class HealthCheck : ControllerBase
-    {
+namespace AuthApi.Controllers;
 
-        [HttpGet]
-        public IActionResult Get()
-        {
-            return Ok("Greetings from auth api :)))");
-        }
+[Route("api/[controller]")]
+[ApiController]
+public class HealthCheck : ControllerBase
+{
+
+    [HttpGet]
+    public IActionResult Get()
+    {
+        return Ok("Auth api healthcheck");
     }
 }

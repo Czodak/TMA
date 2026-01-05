@@ -1,9 +1,8 @@
 ﻿using AuthApi.Exceptions.Base;
 
-namespace AuthApi.Exceptions
+namespace AuthApi.Exceptions;
+
+public class NotFoundException : AppException
 {
-    public class NotFoundException : AppException
-    {
-        public NotFoundException(string message) : base(message, 404) { }
-    }
+    public NotFoundException(string message) : base(message, 404) { }
 }
