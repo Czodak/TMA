@@ -22,8 +22,7 @@ namespace TaskApi.Middleware
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Something went wrong");
-
+                _logger.LogError(ex, "An unhandled exception has occurred.");
                 httpContext.Response.ContentType = "application/json";
 
                 var response = httpContext.Response;

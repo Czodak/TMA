@@ -17,9 +17,6 @@ public class JwtService : IJwtService
     public JwtService(IOptions<JwtSettings> options)
     {
         _settings = options?.Value ?? throw new ArgumentNullException(nameof(options));
-        if (string.IsNullOrWhiteSpace(_settings.Secret))
-            throw new ArgumentException("JWT secret must be configured in JwtSettings.");
-
         _secretBytes = Encoding.UTF8.GetBytes(_settings.Secret);
     }
 
