@@ -61,7 +61,8 @@ namespace TaskApi
                     IssuerSigningKey = new SymmetricSecurityKey(
                         Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"])),
 
-                    ValidateLifetime = true
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
                 };
             });
 

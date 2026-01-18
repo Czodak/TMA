@@ -10,6 +10,11 @@ namespace TaskApi.Messaging.Client
     public class MessageClient : IMessageClient
     {
         private readonly RabbitMqConfig _rabbitMqConfig;
+        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
+        };
 
         public MessageClient(IOptions<RabbitMqConfig> rabbitMqConfig)
         {
@@ -31,7 +36,7 @@ namespace TaskApi.Messaging.Client
             await channel.QueueDeclareAsync(queue: "messages", durable: true, exclusive: false, autoDelete: false, arguments: null);
             // casting to object to serialize the actual record, not the interface
 
-            var messageAsJson = JsonSerializer.Serialize((object)taskEvent);
+            var messageAsJson = JsonSerializer.Serialize((object)taskEvent, JsonOptions);
             var body = Encoding.UTF8.GetBytes(messageAsJson);
             var properties = new BasicProperties
             {

@@ -4,9 +4,9 @@ namespace AuthApi.BusinessLogic.Services.Interfaces;
 
 public interface IAuthService
 {
-    Task<UserInfo> GetCurrentlyLoggedInUser(string userId);
-    Task<List<UserInfo>> GetAllUserInfo();
+    Task<UserInfo> GetCurrentlyLoggedInUser(string userId, CancellationToken cancellationToken);
+    Task<List<UserInfo>> GetAllUserInfo(CancellationToken cancellationToken);
 
-    Task<bool> UserExists(string email);
-    Task<UserInfo> GetUserById(Guid id);
+    Task<bool> UserExists(string email, CancellationToken cancellationToken);
+    Task<UserInfo> GetUserById(Guid id, CancellationToken cancellationToken);
 }

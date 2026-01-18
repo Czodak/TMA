@@ -1,359 +1,495 @@
 ﻿{
-    "openapi": "3.0.1",
-    "info": {
-        "title": "AuthApi | v1",
-        "version": "1.0.0"
-    },
-    "servers": [
-        {
-            "url": "http://[::]:8080"
-        }
-    ],
-    "paths": {
-        "/api/user/register": {
-            "post": {
-                "tags": [
-                    "Auth"
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/RegisterUserRequest"
-                            }
-                        },
-                        "text/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/RegisterUserRequest"
-                            }
-                        },
-                        "application/*+json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/RegisterUserRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
-        "/api/user/login": {
-            "post": {
-                "tags": [
-                    "Auth"
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/LoginUserRequest"
-                            }
-                        },
-                        "text/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/LoginUserRequest"
-                            }
-                        },
-                        "application/*+json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/LoginUserRequest"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
-        "/api/user/me": {
-            "get": {
-                "tags": [
-                    "Auth"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UserInfo"
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UserInfo"
-                                }
-                            },
-                            "text/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UserInfo"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/user/all": {
-            "get": {
-                "tags": [
-                    "Auth"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/UserInfo"
-                                    }
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/UserInfo"
-                                    }
-                                }
-                            },
-                            "text/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/UserInfo"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/user/userExists": {
-            "get": {
-                "tags": [
-                    "Auth"
-                ],
-                "parameters": [
-                    {
-                        "name": "email",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UserInfo"
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UserInfo"
-                                }
-                            },
-                            "text/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UserInfo"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/user/get": {
-            "get": {
-                "tags": [
-                    "Auth"
-                ],
-                "operationId": "GetUserById",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UserInfo"
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UserInfo"
-                                }
-                            },
-                            "text/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UserInfo"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "content": {
-                            "text/plain": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ProblemDetails"
-                                }
-                            },
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ProblemDetails"
-                                }
-                            },
-                            "text/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ProblemDetails"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/HealthCheck": {
-            "get": {
-                "tags": [
-                    "HealthCheck"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        }
-    },
-    "components": {
-        "schemas": {
-            "LoginUserRequest": {
-                "required": [
-                    "email",
-                    "password"
-                ],
-                "type": "object",
-                "properties": {
-                    "email": {
-                        "maxLength": 255,
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "password": {
-                        "type": "string",
-                        "nullable": true
-                    }
-                }
+  "openapi": "3.0.1",
+  "info": {
+    "title": "AuthApi | v1",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://[::]:8080"
+    }
+  ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserRequest"
+              }
             },
-            "ProblemDetails": {
-                "type": "object",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "title": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "status": {
-                        "type": "integer",
-                        "format": "int32",
-                        "nullable": true
-                    },
-                    "detail": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "instance": {
-                        "type": "string",
-                        "nullable": true
-                    }
-                }
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserRequest"
+              }
             },
-            "RegisterUserRequest": {
-                "type": "object",
-                "properties": {
-                    "email": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "password": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "name": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "lastName": {
-                        "type": "string",
-                        "nullable": true
-                    }
-                }
-            },
-            "UserInfo": {
-                "required": [
-                    "id",
-                    "email",
-                    "name",
-                    "lastName"
-                ],
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "email": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "name": {
-                        "type": "string",
-                        "nullable": true
-                    },
-                    "lastName": {
-                        "type": "string",
-                        "nullable": true
-                    }
-                }
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserRequest"
+              }
             }
-        }
-    },
-    "tags": [
-        {
-            "name": "Auth"
+          },
+          "required": true
         },
-        {
-            "name": "HealthCheck"
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
         }
-    ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginUserRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginUserRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/HealthCheck": {
+      "get": {
+        "tags": [
+          "HealthCheck"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/users/me": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserInfo"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserInfo"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/exists": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "operationId": "GetUserById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LoginUserRequest": {
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "RegisterUserRequest": {
+        "required": [
+          "email",
+          "password",
+          "name",
+          "lastName"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "TokenResponse": {
+        "required": [
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UserInfo": {
+        "required": [
+          "id",
+          "email",
+          "name",
+          "lastName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Authentication"
+    },
+    {
+      "name": "HealthCheck"
+    },
+    {
+      "name": "Users"
+    }
+  ]
 }

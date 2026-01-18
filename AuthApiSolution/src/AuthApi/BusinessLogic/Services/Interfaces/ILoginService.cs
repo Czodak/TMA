@@ -4,5 +4,5 @@ namespace AuthApi.BusinessLogic.Services.Interfaces;
 
 public interface ILoginService
 {
-    Task<string> LoginAsync(LoginUserRequest loginUserDto);
+    Task<string> LoginAsync(LoginUserRequest loginUserDto, CancellationToken cancellationToken);
 }

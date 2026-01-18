@@ -10,6 +10,7 @@ public class AuthServiceTests
 {
     private readonly AuthService _sut;
     private readonly IUserRepository _userRepository;
+    private CancellationToken _cancellationToken = CancellationToken.None;
 
     public AuthServiceTests()
     {
@@ -23,16 +24,16 @@ public class AuthServiceTests
     [Fact]
     public async Task GetCurrentlyLoggedInUser_ShouldThrow_WhenInvalidGuid()
     {
-        await Assert.ThrowsAsync<ArgumentException>(() => _sut.GetCurrentlyLoggedInUser("not-a-guid"));
+        await Assert.ThrowsAsync<ArgumentException>(() => _sut.GetCurrentlyLoggedInUser("not-a-guid", _cancellationToken));
     }
 
     [Fact]
     public async Task GetCurrentlyLoggedInUser_ShouldThrow_WhenUserNotFound()
     {
         var id = Guid.NewGuid().ToString();
-        _userRepository.GetByIdAsync(Arg.Any<Guid>()).Returns((UserInfo)null);
+        _userRepository.GetByIdAsync(Arg.Any<Guid>(), _cancellationToken).Returns(null as UserInfo);
 
-        await Assert.ThrowsAsync<NotFoundException>(() => _sut.GetCurrentlyLoggedInUser(id));
+        await Assert.ThrowsAsync<NotFoundException>(() => _sut.GetCurrentlyLoggedInUser(id, _cancellationToken));
     }
 
     [Fact]
@@ -41,9 +42,9 @@ public class AuthServiceTests
         var id = Guid.NewGuid();
         var userInfo = new UserInfo(id, "test@example.com", "John", "Doe");
 
-        _userRepository.GetByIdAsync(id).Returns(userInfo);
+        _userRepository.GetByIdAsync(id, _cancellationToken).Returns(userInfo);
 
-        var result = await _sut.GetCurrentlyLoggedInUser(id.ToString());
+        var result = await _sut.GetCurrentlyLoggedInUser(id.ToString(), _cancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(userInfo.Id, result.Id);
@@ -58,9 +59,9 @@ public class AuthServiceTests
         var id = Guid.NewGuid();
         var userInfo = new UserInfo(id, "test@example.com", "Jane", "Smith");
 
-        _userRepository.GetByIdAsync(id).Returns(userInfo);
+        _userRepository.GetByIdAsync(id, _cancellationToken).Returns(userInfo);
 
-        var result = await _sut.GetUserById(id);
+        var result = await _sut.GetUserById(id, _cancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal(userInfo.Id, result.Id);
@@ -72,9 +73,9 @@ public class AuthServiceTests
     [Fact]
     public async Task UserExists_ShouldReturnTrue_WhenExists()
     {
-        _userRepository.CheckExistenceByEmail("abc@example.com").Returns(true);
+        _userRepository.CheckExistenceByEmail("abc@example.com", _cancellationToken).Returns(true);
 
-        var result = await _sut.UserExists("abc@example.com");
+        var result = await _sut.UserExists("abc@example.com", _cancellationToken);
 
         Assert.True(result);
     }
@@ -82,9 +83,9 @@ public class AuthServiceTests
     [Fact]
     public async Task UserExists_ShouldReturnFalse_WhenNotExists()
     {
-        _userRepository.CheckExistenceByEmail("abc@example.com").Returns(false);
+        _userRepository.CheckExistenceByEmail("abc@example.com", _cancellationToken).Returns(false);
 
-        var result = await _sut.UserExists("abc@example.com");
+        var result = await _sut.UserExists("abc@example.com", _cancellationToken);
 
         Assert.False(result);
     }
@@ -97,9 +98,9 @@ public class AuthServiceTests
             new(Guid.NewGuid(), "test@example.com", "John", "Doe")
         };
 
-        _userRepository.GetAllUsers().Returns(users);
+        _userRepository.GetAllUsers(_cancellationToken).Returns(users);
 
-        var result = await _sut.GetAllUserInfo();
+        var result = await _sut.GetAllUserInfo(_cancellationToken);
 
         Assert.NotNull(result);
         Assert.Single(result);

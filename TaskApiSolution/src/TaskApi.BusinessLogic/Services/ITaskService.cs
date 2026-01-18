@@ -6,14 +6,14 @@ namespace TaskApi.BusinessLogic.Services
 {
     public interface ITaskService
     {
-        Task CreateTaskAsync(CreateTaskRequest createTaskRequest);
-        Task<IEnumerable<ReadTaskDto>> GetAllTasksAsync();
-        Task<ReadTaskDto> GetTaskByIdAsync(int taskId);
-        Task DeleteTask(int taskId);
+        Task<ReadTaskDto> CreateTaskAsync(CreateTaskRequest createTaskRequest, CancellationToken cancellationToken);
+        Task<IEnumerable<ReadTaskDto>> GetAllTasksAsync(CancellationToken cancellationToken);
+        Task<ReadTaskDto> GetTaskByIdAsync(int taskId, CancellationToken cancellationToken);
+        Task DeleteTaskAsync(int taskId, CancellationToken cancellationToken);
 
-        Task UpdateTaskAsync(UpdateTaskDto updateTaskDto);
-        Task UpdateTaskStatusAsync(UpdateTaskStatusDto updateTaskStatusDto);
-        Task ChangeTaskAssignment(UpdateTaskAssigmentDto updateTaskAssigmentDto);
-        Task ClearTaskAssignment(int taskId);
+        Task UpdateTaskAsync(UpdateTaskDto updateTaskDto, CancellationToken cancellationToken);
+        Task UpdateTaskStatusAsync(UpdateTaskStatusDto updateTaskStatusDto, CancellationToken cancellationToken);
+        Task ChangeTaskAssignmentAsync(UpdateTaskAssigmentDto updateTaskAssigmentDto, CancellationToken cancellationToken);
+        Task ClearTaskAssignmentAsync(int taskId, CancellationToken cancellationToken);
     }
 }

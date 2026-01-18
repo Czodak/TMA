@@ -1,4 +1,3 @@
-using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
@@ -7,23 +6,17 @@ using NotificationService.Events;
 using NotificationService.Events.Base;
 using NotificationService.Events.Common;
 using NotificationService.MessageClient;
-using Polly;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using RabbitMQ.Client.Exceptions;
 
 namespace NotificationService
 {
     public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
-        private readonly IConfiguration _configuration;        
-        private JsonSerializerOptions _jsonOptions;
+        private readonly JsonSerializerOptions _jsonOptions;
         private readonly IMessageClient _messageClient;
         private readonly string _queueName;
+        private readonly string _errorQueueName = "messages_error";
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly string ERROR_QUEUE_MESSAGE = "messages_error";
-
 
         private static readonly Dictionary<TaskEventType, Type> _eventTypeMap = new()
         {
@@ -32,32 +25,31 @@ namespace NotificationService
             { TaskEventType.TaskStatusUpdated, typeof(TaskStatusUpdatedEvent) }
         };
 
-        public Worker(ILogger<Worker> logger, IConfiguration configuration, IOptions<JsonSerializerOptions> jsonOptions, IServiceScopeFactory serviceScopeFactory, IMessageClient messageClient)
+        public Worker(ILogger<Worker> logger, IOptions<JsonSerializerOptions> jsonOptions, IServiceScopeFactory serviceScopeFactory, IMessageClient messageClient)
         {
             _logger = logger;
-            _configuration = configuration;
             _jsonOptions = jsonOptions.Value;
             _queueName = "messages";
             _scopeFactory = serviceScopeFactory;
             _messageClient = messageClient;
         }
 
-        private async Task InitializeRabbitMq()
+        private async Task InitializeRabbitMqAsync()
         {
             await _messageClient.CreateConnectionAsync();
             await _messageClient.DeclareQueueAsync(_queueName);
-            await _messageClient.DeclareQueueAsync( ERROR_QUEUE_MESSAGE);
+            await _messageClient.DeclareQueueAsync(_errorQueueName);
             _logger.LogInformation("Listening on message bus");
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await InitializeRabbitMq();
+            await InitializeRabbitMqAsync();
 
             await _messageClient.RegisterConsumer(_queueName, async (channel, body, deliveryTag) =>
             {
                 try
-                {                    
+                {
                     var notificationMessage = Encoding.UTF8.GetString(body);
                     var deserializedMessage = DeserializeEvent(notificationMessage);
 
@@ -67,17 +59,19 @@ namespace NotificationService
                     try
                     {
                         await messageEventHandler.HandleEvent(deserializedMessage);
+                        await channel.BasicAckAsync(deliveryTag, false);
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        _logger.LogError(ex, "Failed to handle event, sending to error queue");
                         var errorBody = Encoding.UTF8.GetBytes(notificationMessage);
-                        await _messageClient.PublishAsync(ERROR_QUEUE_MESSAGE, errorBody);
+                        await _messageClient.PublishAsync(_errorQueueName, errorBody);
+                        await channel.BasicAckAsync(deliveryTag, false);
                     }
-                    await channel.BasicAckAsync(deliveryTag, false);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"There was an error when trying to process the message.");
+                    _logger.LogError(ex, "Error processing message from queue");
                 }
             });
 
@@ -90,23 +84,39 @@ namespace NotificationService
 
         private ITaskEvent DeserializeEvent(string message)
         {
-            using var document = JsonDocument.Parse(message);
+            try
+            {
+                using var document = JsonDocument.Parse(message);
 
-            if (!document.RootElement.TryGetProperty("EventType", out var eventTypeElement))
-                throw new Exception("Missing eventType");
+                if (!document.RootElement.TryGetProperty("eventType", out var eventTypeElement))
+                    throw new InvalidOperationException("Missing 'EventType' property in message");
 
-            var eventType = Enum.Parse<TaskEventType>(eventTypeElement.GetString());
+                var eventTypeString = eventTypeElement.GetString();
+                if (string.IsNullOrEmpty(eventTypeString))
+                    throw new InvalidOperationException("EventType cannot be null or empty");
 
-            if (!_eventTypeMap.TryGetValue(eventType, out var concreteType))
-                throw new Exception($"Unknown eventType: {eventType}");
+                if (!Enum.TryParse<TaskEventType>(eventTypeString, out var eventType))
+                    throw new InvalidOperationException($"Invalid EventType value: {eventTypeString}");
 
-            return (ITaskEvent)JsonSerializer.Deserialize(message, concreteType);
+                if (!_eventTypeMap.TryGetValue(eventType, out var concreteType))
+                    throw new InvalidOperationException($"Unknown EventType: {eventType}");
+
+                var result = JsonSerializer.Deserialize(message, concreteType, _jsonOptions);
+                if (result == null)
+                    throw new InvalidOperationException($"Failed to deserialize message to type {concreteType.Name}");
+
+                return (ITaskEvent)result;
+            }
+            catch (JsonException ex)
+            {
+                throw new InvalidOperationException("Failed to parse message as JSON", ex);
+            }
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
-           await _messageClient.StopAsync(cancellationToken);
-           await base.StopAsync(cancellationToken);
+            await _messageClient.StopAsync(cancellationToken);
+            await base.StopAsync(cancellationToken);
         }
     }
 }

@@ -8,15 +8,15 @@ namespace TaskApi.Data.Repositories
 {
     public interface ITaskRepository
     {
-        Task<IEnumerable<ReadTaskDto>> GetAllTasksAsync();
-        Task SaveTaskAsync(CreateTaskRequest task);
-        Task<ReadTaskDto> GetTaskDtoByIdAsync(int id);
-        Task DeleteTask(int taskId);
-        Task DeleteTask(Tasks task);
-        Task<Tasks> GetTaskByIdAsync(int id);
+        Task<IEnumerable<ReadTaskDto>> GetAllTasksAsync(CancellationToken cancellationToken);
+        Task<int> SaveTaskAsync(CreateTaskRequest task, CancellationToken cancellationToken);
+        Task<ReadTaskDto> GetTaskDtoByIdAsync(int id, CancellationToken cancellationToken);
+        Task DeleteTask(int taskId, CancellationToken cancellationToken);
+        Task DeleteTask(Tasks task, CancellationToken cancellationToken);
+        Task<Tasks> GetTaskByIdAsync(int id, CancellationToken cancellationToken);
 
-        Task UpdateTaskAsync(Tasks task);
-        Task UpdateTaskStatusAsync(Tasks task, TaskStatuses newStatus);
-        Task UpdateAssignmentAsync(Tasks existingTask, UpdateTaskAssigmentDto updateTaskAssigmentDto);
+        Task UpdateTaskAsync(Tasks task, CancellationToken cancellationToken);
+        Task UpdateTaskStatusAsync(Tasks task, TaskStatuses newStatus, CancellationToken cancellationToken);
+        Task UpdateAssignmentAsync(Tasks existingTask, UpdateTaskAssigmentDto updateTaskAssigmentDto, CancellationToken cancellationToken);
     }
 }

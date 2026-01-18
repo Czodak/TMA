@@ -8,52 +8,60 @@ namespace AuthApi.BusinessLogic.Services.Implementation;
 
 public class RegistrationService : IRegistrationService
 {
-    private readonly Regex EmailValidatonRegex;
+    private static readonly Regex EmailValidationRegex = new(
+        "^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
     private readonly IUserRepository _userRepository;
     private readonly IJwtService _jwtService;
+    private readonly IPasswordHasher _passwordHasher;
+    private readonly ILogger<RegistrationService> _logger;
 
-    public RegistrationService(IUserRepository userRepository, IJwtService jwtService)
+    public RegistrationService(IUserRepository userRepository, IJwtService jwtService, IPasswordHasher passwordHasher, ILogger<RegistrationService> logger)
     {
         _userRepository = userRepository;
-        EmailValidatonRegex = new Regex("^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$");
         _jwtService = jwtService;
+        _passwordHasher = passwordHasher;
+        _logger = logger;
     }
 
-    public async Task<string> RegisterAsync(RegisterUserRequest registerUserDto)
+    public async Task<string> RegisterAsync(RegisterUserRequest registerUserDto, CancellationToken cancellationToken)
     {
+        if (registerUserDto == null) throw new ArgumentNullException(nameof(registerUserDto));
         if (!IsEmailValid(registerUserDto.Email))
         {
             throw new ArgumentException("Invalid email address");
         }
 
-        var userExists = await _userRepository.CheckExistenceByEmail(registerUserDto.Email);
-
+        var userExists = await _userRepository.CheckExistenceByEmail(registerUserDto.Email, cancellationToken);
         if (userExists)
         {
             throw new ArgumentException("Email is already taken");
         }
 
-
-        var hashedPassword = BCrypt.Net.BCrypt.HashPassword(registerUserDto.Password);
-
         var user = new UserEntity
         {
             Email = registerUserDto.Email,
-            PasswordHash = hashedPassword,
+            PasswordHash = _passwordHasher.Hash(registerUserDto.Password),
             Name = registerUserDto.Name,
             LastName = registerUserDto.LastName
         };
 
-        await _userRepository.AddAsync(user);
+        await _userRepository.AddAsync(user, cancellationToken);
 
-        return _jwtService.GenerateJwt(user);
+        var persisted = await _userRepository.GetByEmailAsync(user.Email, cancellationToken);
+        if (persisted == null)
+        {
+            _logger.LogError("User persisted but cannot be retrieved by email {Email}", user.Email);
+            throw new InvalidOperationException("Failed to create user");
+        }
+
+        return _jwtService.GenerateJwt(persisted);
     }
 
-    private bool IsEmailValid(string email)
+    private static bool IsEmailValid(string email)
     {
         if (string.IsNullOrEmpty(email)) return false;
-
-        if (EmailValidatonRegex.IsMatch(email)) return true;
-        return false;
+        return EmailValidationRegex.IsMatch(email);
     }
 }

@@ -4,7 +4,6 @@ using TaskApi.BusinessLogic.MessagesCreator;
 using TaskApi.Common.Contracts.Request;
 using TaskApi.Common.Contracts.Response;
 using TaskApi.Common.Exceptions;
-using TaskApi.Common.HttpClients.Auth;
 using TaskApi.Contracts.Request;
 using TaskApi.Data.Entities;
 using TaskApi.Data.Repositories;
@@ -27,105 +26,99 @@ namespace TaskApi.BusinessLogic.Services
             _messageFactory = messageFactory;
         }
 
-        public async Task CreateTaskAsync(CreateTaskRequest createTaskRequest)
+        public async Task<ReadTaskDto> CreateTaskAsync(CreateTaskRequest createTaskRequest, CancellationToken cancellationToken)
         {
-            var currentlyLoggenInUser = await _authApiService.MeAsync();
+            ArgumentNullException.ThrowIfNull(createTaskRequest);
 
-            if (currentlyLoggenInUser == null)
-            {
-                throw new UnauthorizedAccessException("User not found");
-            }
-            createTaskRequest.CreatorId = currentlyLoggenInUser.Id;
-            await _taskRepository.SaveTaskAsync(createTaskRequest);
+            var currentlyLoggedInUser = await _authApiService.MeAsync();
+
+            createTaskRequest.CreatorId = currentlyLoggedInUser.Id;
+            var taskId = await _taskRepository.SaveTaskAsync(createTaskRequest, cancellationToken);
+
+            var createdTask = await _taskRepository.GetTaskDtoByIdAsync(taskId, cancellationToken);
+            return createdTask ?? throw new InvalidOperationException($"Failed to retrieve created task with id {taskId}");
         }
 
-        public async Task DeleteTask(int taskId)
+        public async Task DeleteTaskAsync(int taskId, CancellationToken cancellationToken)
         {
-            var existingTask = await GetTaskById(taskId);
+            var existingTask = await GetTaskById(taskId, cancellationToken);
 
-            await _taskRepository.DeleteTask(existingTask);
+            await _taskRepository.DeleteTask(existingTask, cancellationToken);
 
             var message = await _messageFactory.GetTaskRemovedEvent(existingTask);
             await _messageClient.SendMessage(message);
         }
 
-        public async Task<IEnumerable<ReadTaskDto>> GetAllTasksAsync()
+        public async Task<IEnumerable<ReadTaskDto>> GetAllTasksAsync(CancellationToken cancellationToken)
         {
-            return await _taskRepository.GetAllTasksAsync();
+            return await _taskRepository.GetAllTasksAsync(cancellationToken);
         }
 
-        public async Task<ReadTaskDto> GetTaskByIdAsync(int taskId)
+        public async Task<ReadTaskDto> GetTaskByIdAsync(int taskId, CancellationToken cancellationToken)
         {
-            return await _taskRepository.GetTaskDtoByIdAsync(taskId);
+            var dto = await _taskRepository.GetTaskDtoByIdAsync(taskId, cancellationToken);
+            return dto ?? throw new NotFoundException($"Task with id {taskId} was not found");
         }
 
-        public async Task UpdateTaskAsync(UpdateTaskDto updateTaskDto)
+        public async Task UpdateTaskAsync(UpdateTaskDto updateTaskDto, CancellationToken cancellationToken)
         {
-            var existingTask = await GetTaskById(updateTaskDto.Id);
+            ArgumentNullException.ThrowIfNull(updateTaskDto);
 
-            if(UpdateTaskExtension.ApplyUpdate(existingTask, updateTaskDto))
+            var existingTask = await GetTaskById(updateTaskDto.Id, cancellationToken);
+
+            if (UpdateTaskExtension.ApplyUpdate(existingTask, updateTaskDto))
             {
-                await _taskRepository.UpdateTaskAsync(existingTask);                
+                await _taskRepository.UpdateTaskAsync(existingTask, cancellationToken);
             }
         }
 
-        public async Task UpdateTaskStatusAsync(UpdateTaskStatusDto updateTaskStatusDto)
+        public async Task UpdateTaskStatusAsync(UpdateTaskStatusDto updateTaskStatusDto, CancellationToken cancellationToken)
         {
-            var existingTask = await GetTaskById(updateTaskStatusDto.Id);
+            ArgumentNullException.ThrowIfNull(updateTaskStatusDto);
+
+            var existingTask = await GetTaskById(updateTaskStatusDto.Id, cancellationToken);
 
             if (existingTask.Status == updateTaskStatusDto.Status) return;
 
-            await _taskRepository.UpdateTaskStatusAsync(existingTask, updateTaskStatusDto.Status);
+            await _taskRepository.UpdateTaskStatusAsync(existingTask, updateTaskStatusDto.Status, cancellationToken);
             var taskStatusUpdatedEvent = await _messageFactory.GetTaskStatusUpdatedEvent(existingTask);
             await _messageClient.SendMessage(taskStatusUpdatedEvent);
         }
 
-        public async Task ChangeTaskAssignment(UpdateTaskAssigmentDto updateTaskAssigmentDto)
+        public async Task ChangeTaskAssignmentAsync(UpdateTaskAssigmentDto updateTaskAssigmentDto, CancellationToken cancellationToken)
         {
-            var existingTask = await GetTaskById(updateTaskAssigmentDto.Id);
+            ArgumentNullException.ThrowIfNull(updateTaskAssigmentDto);
+
+            var existingTask = await GetTaskById(updateTaskAssigmentDto.Id, cancellationToken);
 
             if (updateTaskAssigmentDto.NewAssignedUser == existingTask.CurrentlyAssignedUserId)
             {
                 return;
             }
-            
+
             var user = await _authApiService.GetUserById(updateTaskAssigmentDto.NewAssignedUser);
-            if(user == null)
-            {
-                throw new NotFoundException("User with given id was not found");
-            }
-            
-            await _taskRepository.UpdateAssignmentAsync(existingTask, updateTaskAssigmentDto);
-            
-            if(user == null)
-            {
-                return;
-            }
+            await _taskRepository.UpdateAssignmentAsync(existingTask, updateTaskAssigmentDto, cancellationToken);
 
             var message = _messageFactory.GetTaskAssignementUpdatedEvent(existingTask, user);
             await _messageClient.SendMessage(message);
         }
 
-        public async Task ClearTaskAssignment(int taskId)
+        public async Task ClearTaskAssignmentAsync(int taskId, CancellationToken cancellationToken)
         {
-            var existingTask = await GetTaskById(taskId);
-            if(existingTask.CurrentlyAssignedUserId == null)
+            var existingTask = await GetTaskById(taskId, cancellationToken);
+            if (existingTask.CurrentlyAssignedUserId == null)
             {
                 return;
             }
 
             existingTask.CurrentlyAssignedUserId = null;
-            await _taskRepository.UpdateTaskAsync(existingTask);
+            await _taskRepository.UpdateTaskAsync(existingTask, cancellationToken);
         }
 
-        private async Task<Tasks> GetTaskById(int taskId)
+        private async Task<Tasks> GetTaskById(int taskId, CancellationToken cancellationToken)
         {
-            var existingTask = await _taskRepository.GetTaskByIdAsync(taskId);
-            if (existingTask == null)
-            {
-                throw new NotFoundException("Task with given id was not found");
-            }
-            return existingTask;
+            var existingTask = await _taskRepository.GetTaskByIdAsync(taskId, cancellationToken);
+            return existingTask ?? throw new NotFoundException($"Task with id {taskId} was not found");
         }
     }
 }

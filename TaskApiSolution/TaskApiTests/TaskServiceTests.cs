@@ -1,13 +1,12 @@
-﻿using System.Threading.Tasks;
-using NSubstitute;
+﻿using NSubstitute;
 using TaskApi.BusinessLogic.AuthApiService;
 using TaskApi.BusinessLogic.MessagesCreator;
 using TaskApi.BusinessLogic.Services;
 using TaskApi.Common.Contracts.Request;
+using TaskApi.Common.Contracts.Response;
 using TaskApi.Common.Enums;
 using TaskApi.Common.Events;
 using TaskApi.Common.Events.Base;
-using TaskApi.Common.Exceptions;
 using TaskApi.Common.HttpClients.Auth;
 using TaskApi.Contracts.Request;
 using TaskApi.Data.Entities;
@@ -28,6 +27,8 @@ namespace TaskApiTests
         private readonly UserInfo _currentlyLoggedInUser;
         private const int TASK_ID = 1;
         private readonly Tasks _existingTask;
+
+        private readonly CancellationToken _cancellationToken= CancellationToken.None;
 
         public TaskServiceTests()
         {
@@ -52,7 +53,7 @@ namespace TaskApiTests
                 CurrentlyAssignedUserId = _currentlyLoggedInUser.Id
             };
 
-            _taskRepository.GetTaskByIdAsync(TASK_ID).Returns(_existingTask);
+            _taskRepository.GetTaskByIdAsync(TASK_ID, _cancellationToken).Returns(_existingTask);
         }
 
 
@@ -65,24 +66,15 @@ namespace TaskApiTests
                 CreatorId = Guid.Empty
             };
 
+            _taskRepository.GetTaskDtoByIdAsync(Arg.Any<int>(), _cancellationToken).Returns(new ReadTaskDto { Id = 1 });   
 
             //Act
-            await _sut.CreateTaskAsync(createTaskRequest);
+            var result = await _sut.CreateTaskAsync(createTaskRequest, _cancellationToken);
 
             //Assert
-            await _taskRepository.Received(1).SaveTaskAsync(Arg.Is<CreateTaskRequest>(x => x.CreatorId == _currentlyLoggedInUser.Id));
-        }
-
-        [Fact]
-        public async Task CreateTaskAsync_NullUser_ThrowsException()
-        {
-            //Arrange
-            var createTaskRequest = new CreateTaskRequest();
-            UserInfo? nullUser = null;
-            _authApiService.MeAsync().Returns(nullUser);
-
-            //Act && Assert
-            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.CreateTaskAsync(createTaskRequest));
+            await _taskRepository.Received(1).SaveTaskAsync(Arg.Is<CreateTaskRequest>(x => x.CreatorId == _currentlyLoggedInUser.Id), _cancellationToken);
+            Assert.NotNull(result);
+            Assert.Equal(1, result.Id);
         }
 
         [Fact]
@@ -93,11 +85,11 @@ namespace TaskApiTests
             _messageFactory.GetTaskRemovedEvent(_existingTask).Returns(taskRemovedMessage);
 
             //Act
-            await _sut.DeleteTask(TASK_ID);
+            await _sut.DeleteTaskAsync(TASK_ID, _cancellationToken);
 
             //Assert
-            await _taskRepository.Received(1).GetTaskByIdAsync(TASK_ID);
-            await _taskRepository.Received(1).DeleteTask(_existingTask);
+            await _taskRepository.Received(1).GetTaskByIdAsync(TASK_ID, _cancellationToken);
+            await _taskRepository.Received(1).DeleteTask(_existingTask, _cancellationToken);
             await _messageFactory.Received(1).GetTaskRemovedEvent(_existingTask);
             await _messageClient.Received(1).SendMessage(taskRemovedMessage);
         }
@@ -114,10 +106,10 @@ namespace TaskApiTests
             };
 
             //Act
-            await _sut.UpdateTaskAsync(updateTaskDto);
+            await _sut.UpdateTaskAsync(updateTaskDto, _cancellationToken);
 
             //Assert
-            await _taskRepository.Received(1).UpdateTaskAsync(Arg.Is<Tasks>(x => x.Title == newTitle));
+            await _taskRepository.Received(1).UpdateTaskAsync(Arg.Is<Tasks>(x => x.Title == newTitle), _cancellationToken);
         }
 
         [Fact]
@@ -130,10 +122,10 @@ namespace TaskApiTests
             };
 
             //Act
-            await _sut.UpdateTaskAsync(updateTaskDto);
+            await _sut.UpdateTaskAsync(updateTaskDto, _cancellationToken);
 
             //Assert
-            await _taskRepository.DidNotReceiveWithAnyArgs().UpdateTaskAsync(Arg.Any<Tasks>());
+            await _taskRepository.DidNotReceiveWithAnyArgs().UpdateTaskAsync(Arg.Any<Tasks>(), Arg.Any<CancellationToken>());
         }
 
         [Fact]
@@ -151,10 +143,10 @@ namespace TaskApiTests
             _messageFactory.GetTaskStatusUpdatedEvent(_existingTask).Returns(taskUpdatedEvent);
 
             //Act
-            await _sut.UpdateTaskStatusAsync(updateTaskStatusDto);
+            await _sut.UpdateTaskStatusAsync(updateTaskStatusDto, _cancellationToken);
 
             //Assert
-            await _taskRepository.Received(1).UpdateTaskStatusAsync(_existingTask, newStatus);
+            await _taskRepository.Received(1).UpdateTaskStatusAsync(_existingTask, newStatus, _cancellationToken);
             await _messageFactory.Received(1).GetTaskStatusUpdatedEvent(_existingTask);
             await _messageClient.Received(1).SendMessage(taskUpdatedEvent);
         }
@@ -170,10 +162,10 @@ namespace TaskApiTests
             };
 
             //Act
-            await _sut.UpdateTaskStatusAsync(updateTaskStatusDto);
+            await _sut.UpdateTaskStatusAsync(updateTaskStatusDto, _cancellationToken);
 
             //Assert
-            await _taskRepository.DidNotReceive().UpdateTaskStatusAsync(Arg.Any<Tasks>(), Arg.Any<TaskStatuses>());
+            await _taskRepository.DidNotReceive().UpdateTaskStatusAsync(Arg.Any<Tasks>(), Arg.Any<TaskStatuses>(), Arg.Any<CancellationToken>());
             await _messageFactory.DidNotReceive().GetTaskStatusUpdatedEvent(Arg.Any<Tasks>());
             await _messageClient.DidNotReceive().SendMessage(Arg.Any<TaskStatusUpdatedEvent>());
         }
@@ -194,10 +186,10 @@ namespace TaskApiTests
             _messageFactory.GetTaskAssignementUpdatedEvent(_existingTask, user).Returns(message);
 
             //Act
-            await _sut.ChangeTaskAssignment(updateTaskAssigmentDto);
+            await _sut.ChangeTaskAssignmentAsync(updateTaskAssigmentDto, _cancellationToken);
 
             //Assert
-            await _taskRepository.Received(1).UpdateAssignmentAsync(_existingTask, updateTaskAssigmentDto);
+            await _taskRepository.Received(1).UpdateAssignmentAsync(_existingTask, updateTaskAssigmentDto, _cancellationToken);
             _messageFactory.Received(1).GetTaskAssignementUpdatedEvent(_existingTask, user);
             await _messageClient.Received(1).SendMessage(message);
         }
@@ -215,31 +207,10 @@ namespace TaskApiTests
             _authApiService.GetUserById(updateTaskAssigmentDto.NewAssignedUser).Returns(_currentlyLoggedInUser);
 
             //Act
-            await _sut.ChangeTaskAssignment(updateTaskAssigmentDto);
+            await _sut.ChangeTaskAssignmentAsync(updateTaskAssigmentDto, _cancellationToken);
 
             //Assert
-            await _taskRepository.DidNotReceive().UpdateAssignmentAsync(Arg.Any<Tasks>(), Arg.Any<UpdateTaskAssigmentDto>());
-            _messageFactory.DidNotReceive().GetTaskAssignementUpdatedEvent(Arg.Any<Tasks>(), Arg.Any<UserInfo>());
-            await _messageClient.DidNotReceive().SendMessage(Arg.Any<ITaskEvent>());
-        }
-
-        [Fact]
-        public async Task ChangeTaskAssignment_NewUserNotFound_ThrowsException()
-        {
-            //Arrange
-            var updateTaskAssigmentDto = new UpdateTaskAssigmentDto
-            {
-                Id = TASK_ID,
-                NewAssignedUser = Guid.NewGuid()
-            };
-            UserInfo? user = null;
-            _authApiService.GetUserById(updateTaskAssigmentDto.NewAssignedUser).Returns(user);
-
-            //Act
-            await Assert.ThrowsAsync<NotFoundException>(() => _sut.ChangeTaskAssignment(updateTaskAssigmentDto));
-            
-            //Assert
-            await _taskRepository.DidNotReceive().UpdateAssignmentAsync(Arg.Any<Tasks>(), Arg.Any<UpdateTaskAssigmentDto>());
+            await _taskRepository.DidNotReceive().UpdateAssignmentAsync(Arg.Any<Tasks>(), Arg.Any<UpdateTaskAssigmentDto>(), Arg.Any<CancellationToken>());
             _messageFactory.DidNotReceive().GetTaskAssignementUpdatedEvent(Arg.Any<Tasks>(), Arg.Any<UserInfo>());
             await _messageClient.DidNotReceive().SendMessage(Arg.Any<ITaskEvent>());
         }

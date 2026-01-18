@@ -4,6 +4,7 @@ using AuthApi.BusinessLogic.Services.Interfaces;
 using AuthApi.Data;
 using AuthApi.Data.Repositories;
 using AuthApi.Middleware;
+using AuthApi.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
@@ -36,8 +37,10 @@ public class Program
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<ILoginService, LoginService>();
         builder.Services.AddScoped<IRegistrationService, RegistrationService>();
+        builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
         builder.Services.AddSingleton<IJwtService, JwtService>();
-        
+        builder.Services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
+
 
         builder.Services.AddAuthorization();
 
